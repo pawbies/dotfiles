@@ -1,0 +1,9 @@
+import = [
+       "~/.config/alacritty/themes/themes/ashes_dark.toml"
+]
+
+[font]
+normal = {family = "FiraCodeNerdFontMono", style="Regular"}
+bold = {family = "FiraCodeNerdFontMono", style="Bold"}
+italic = {family = "FiraCodeNerdFontMono", style="Italic"}
+bold_italic = {family = "FiraCodeNerdFontMono", style="Bold Italic"}
