@@ -2,6 +2,10 @@ import = [
        "~/.config/alacritty/themes/themes/ashes_dark.toml"
 ]
 
+[shell]
+program = "/bin/bash"
+args = ["--login"]
+
 [font]
 normal = {family = "FiraCodeNerdFontMono", style="Regular"}
 bold = {family = "FiraCodeNerdFontMono", style="Bold"}
