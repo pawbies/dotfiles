@@ -226,7 +226,7 @@
  '(custom-safe-themes
    '("7e377879cbd60c66b88e51fad480b3ab18d60847f31c435f15f5df18bdb18184" "e1f4f0158cd5a01a9d96f1f7cdcca8d6724d7d33267623cc433fe1c196848554" "4594d6b9753691142f02e67b8eb0fda7d12f6cc9f1299a49b819312d6addad1d" "93011fe35859772a6766df8a4be817add8bfe105246173206478a0706f88b33d" "f5f80dd6588e59cfc3ce2f11568ff8296717a938edd448a947f9823a4e282b66" "ff24d14f5f7d355f47d53fd016565ed128bf3af30eb7ce8cae307ee4fe7f3fd0" "e3daa8f18440301f3e54f2093fe15f4fe951986a8628e98dcd781efbec7a46f2" "b5fd9c7429d52190235f2383e47d340d7ff769f141cd8f9e7a4629a81abc6b19" "014cb63097fc7dbda3edf53eb09802237961cbb4c9e9abd705f23b86511b0a69" default))
  '(package-selected-packages
-   '(company-box lsp-ivy nyan-mode magit counsel-projectile hydra general all-the-icons doom-themes helpful ivy-rich rainbow-delimiters which-key visual-fill-column visual-fill undo-tree rust-mode projectile org-bullets neotree lsp-mode kaolin-themes kanagawa-theme flycheck doom-modeline dashboard counsel company)))
+   '(lsp-ivy nyan-mode magit counsel-projectile hydra general all-the-icons doom-themes helpful ivy-rich rainbow-delimiters which-key visual-fill-column visual-fill undo-tree rust-mode projectile org-bullets neotree lsp-mode kaolin-themes kanagawa-theme flycheck doom-modeline dashboard counsel company)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
