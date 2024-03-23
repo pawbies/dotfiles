@@ -1,13 +1,33 @@
-import = [
-       "~/.config/alacritty/themes/themes/ashes_dark.toml"
-]
+import = ["/home/choneyfox/.config/alacritty/colors.yml", "/home/choneyfox/.config/alacritty/fonts.yml"]
+live_config_reload = true
 
 [shell]
-program = "/bin/bash"
+program = "/usr/bin/fish"
 args = ["--login"]
 
-[font]
-normal = {family = "FiraCodeNerdFontMono", style="Regular"}
-bold = {family = "FiraCodeNerdFontMono", style="Bold"}
-italic = {family = "FiraCodeNerdFontMono", style="Italic"}
-bold_italic = {family = "FiraCodeNerdFontMono", style="Bold Italic"}
+[cursor]
+unfocused_hollow = false
+
+[cursor.style]
+blinking = "On"
+shape = "Block"
+
+[env]
+TERM = "alacritty"
+WINIT_X11_SCALE_FACTOR = "1.0"
+
+[window]
+decorations = "full"
+dynamic_title = true
+#history = 10000
+#multiplier = 3
+opacity = 1
+startup_mode = "Windowed"
+
+[window.dimensions]
+columns = 82
+lines = 24
+
+[window.padding]
+x = 5
+y = 3
