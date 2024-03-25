@@ -1,13 +1,4 @@
-#colors
-set-option -sa terminal-overrides ",xterm*:Tc"
-
-#scrolling
 set -g mouse on
-
-
-#use fish
-set-option -g default-shell "/usr/bin/fish"
-
 
 #new prefix
 unbind C-b
@@ -36,14 +27,11 @@ unbind z
 bind 0 confirm kill-pane
 unbind x
 
-#plugins
-set -g @plugin 'tmux-plugins/tpm'
-set -g @plugin 'tmux-plugins/tmux-sensible'
+set-option -sa terminal-overrides ",xterm*:Tc"
+
 set -g @plugin 'o0th/tmux-nova'
 
-
-#theme
-set -g @nova-nerdfonts true
+set -g@nova-nerdfonts true
 set -g @nova-nerdfonts-left 
 set -g @nova-nerdfonts-right 
 
@@ -59,5 +47,7 @@ set -g @nova-rows 0
 set -g @nova-segments-0-left "mode"
 set -g @nova-segments-0-right "whoami"
 
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
 
 run "~/.tmux/plugins/tpm/tpm"

@@ -1,0 +1,89 @@
+
+
+* Alacritty Configuration
+** Colors
+#+begin_src toml :tangle ./alacritty.toml
+  [colors.bright]
+  black = "0x4a697d"
+  blue = "0x51b4ff"
+  cyan = "0x5cdff0"
+  green = "0x70d675"
+  magenta = "0xc979d7"
+  red = "0xfb8784"
+  white = "0xffffff"
+  yellow = "0xffe744"
+
+  [colors.normal]
+  black = "0x263640"
+  blue = "0x42a5f5"
+  cyan = "0x4dd0e1"
+  green = "0x61c766"
+  magenta = "0xba68c8"
+  red = "0xec7875"
+  white = "0xfff000"
+  yellow = "0xfdd835"
+
+  [colors.primary]
+  background = "0x212B30"
+  foreground = "0xc4c7c5"
+#+end_src
+
+** Font
+#+begin_src toml :tangle ./alacritty.toml
+  [font]
+  size = 10	
+
+  [font.bold_italic]
+  family = "FiraCode Nerd Font Mono"
+  style = "Bold Italic"
+
+  [font.italic]
+  family = "FiraCode Nerd Font Mono"
+  style = "Italic"
+
+  [font.normal]
+  family = "FiraCode Nerd Font Mono"
+  style = "Semibold"
+#+end_src
+
+** Shell
+Configuring fish as the default shell
+#+begin_src toml :tangle ./alacritty.toml
+  [shell]
+  program = "/usr/bin/fish"
+  args = ["--login"]
+#+end_src
+
+** Cursor
+#+begin_src toml :tangle ./alacritty.toml
+  [cursor]
+  unfocused_hollow = false
+
+  [cursor.style]
+  blinking = "On"
+  shape = "Block"
+#+end_src 
+
+** Enviornment
+#+begin_src toml :tangle ./alacritty.toml
+  [env]
+  TERM = "alacritty"
+  WINIT_X11_SCALE_FACTOR = "1.0"
+#+end_src
+
+** Window
+#+begin_src toml :tangle ./alacritty.toml
+  [window]
+  decorations = "full"
+  dynamic_title = true
+  opacity = 1
+  startup_mode = "Windowed"
+
+  [window.dimensions]
+  columns = 82
+  lines = 24
+
+  [window.padding]
+  x = 5
+  y = 3
+#+end_src

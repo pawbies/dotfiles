@@ -1,4 +1,3 @@
-; function for transparency
 (defun transparency (value)
   "Set the transparency"
   (interactive "nTrancparency Value 0 - 100 opaque: ")
@@ -7,16 +6,12 @@
 (transparency 100)
 
 
-
-
-;; transparency on in terminalq
+;; transparency on in terminal
 (defun on-after-init ()
   (unless (display-graphic-p (selected-frame))
     (set-face-background 'default "unspecified-bg" (selected-frame))))
 
 ;;(add-hook 'window-setup-hook 'on-after-init)
-
-
 
 (setq inhibit-startup-message t) ;disable default emacs startpage
 (scroll-bar-mode -1)    ; disable the visual scrollbar
@@ -25,17 +20,22 @@
 (set-fringe-mode 10)    ;stuff
 (menu-bar-mode -1)      ;disable menu bar
 
-;; set up the visual bell
 (setq visible-bell t)
 
 (set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 110)
 
-;; Make ESC quit prompts
+(column-number-mode)
+(global-display-line-numbers-mode t)
+
+  ;; disable line numbers for some modes
+(dolist (mode '(org-mode-hook
+                term-mode-hook
+                shell-mode-hook
+                eshell-mode-hook))
+  (add-hook mode (lambda() (display-line-numbers-mode 0))))
+
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
-
-
-;; initialize package stuff
 (require 'package)
 
 ;; package sources
@@ -49,21 +49,6 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
-
-
-;; line numbers
-(column-number-mode)
-(global-display-line-numbers-mode t)
-;;(setq display-line-numbers 'relative)
-
-;; disable line numbers for some modes
-(dolist (mode '(org-mode-hook
-		term-mode-hook
-		shell-mode-hook
-		eshell-mode-hook))
-  (add-hook mode (lambda() (display-line-numbers-mode 0))))
-
-
 
 (use-package counsel
   :diminish ivy-mode
@@ -97,16 +82,16 @@
   :ensure t
   :init (doom-modeline-mode 1)
   :custom (
-	   (doom-modeline-height 15)
-	   (doom-modeline-bar-width 6)
-	   (doom-modeline-lsp t)
-	   (doom-modeline-github nil)
-	   (doom-modeline-mu4e nil)
-	   (doom-modeline-irc t)
-	   (doom-modeline-minor-modes nil)
-	   (doom-modeline-persp-name nil)
-	   (doom-modeline-buffer-file-name-style 'truncate-except-project)
-	   (doom-modeline-major-mode-icon nil))) ;; smaller modeline
+           (doom-modeline-height 15)
+           (doom-modeline-bar-width 6)
+           (doom-modeline-lsp t)
+           (doom-modeline-github nil)
+           (doom-modeline-mu4e nil)
+           (doom-modeline-irc t)
+           (doom-modeline-minor-modes nil)
+           (doom-modeline-persp-name nil)
+           (doom-modeline-buffer-file-name-style 'truncate-except-project)
+           (doom-modeline-major-mode-icon nil))) ;; smaller modeline
 
 (use-package nyan-mode)
 
@@ -130,17 +115,12 @@
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
 
-
+;; doom-tomorrow-night is also pretty good
 (use-package doom-themes
-  :init (load-theme 'doom-tomorrow-night t))
+  :init (load-theme 'doom-tokyo-night t))
 
 ;; M-x all-the-icons-install-fonts
 (use-package all-the-icons)
-
-(use-package general)
-
-(general-define-key
- "C-c c c" 'compile)
 
 (use-package projectile
   :diminish projectile-mode
@@ -155,60 +135,96 @@
   :config (counsel-projectile-mode))
 
 (use-package magit)
-  ;:custom
-  ;(magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
-(load-file "~/.emacs.d/lsp.el")
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :config
+  (lsp-enable-which-key-integration t))
 
-;; Org Mode Configuration ------------------------------------------------------
+;; ivy integration
+; (use-package lsp-ivy)
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+         ("<tab>" . company-complete-selection))
+        (:map lsp-mode-map
+         ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
 
 (defun efs/org-mode-setup ()
-  (org-indent-mode)
-  (variable-pitch-mode 1)
-  (visual-line-mode 1))
+    (org-indent-mode)
+    (variable-pitch-mode 1)
+    (visual-line-mode 1))
 
 
-(defun efs/org-font-setup ()
-  ;; Replace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  (defun efs/org-font-setup ()
+    ;; Replace list hyphen with dot
+    (font-lock-add-keywords 'org-mode
+                            '(("^ *\\([-]\\) "
+                               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-  ;; Set faces for heading levels
-  (dolist (face '((org-level-1 . 1.2)
-                  (org-level-2 . 1.1)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.1)
-                  (org-level-6 . 1.1)
-                  (org-level-7 . 1.1)
-                  (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+    ;; Set faces for heading levels
+    (dolist (face '((org-level-1 . 1.2)
+                    (org-level-2 . 1.1)
+                    (org-level-3 . 1.05)
+                    (org-level-4 . 1.0)
+                    (org-level-5 . 1.1)
+                    (org-level-6 . 1.1)
+                    (org-level-7 . 1.1)
+                    (org-level-8 . 1.1)))
+      (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
 
-  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
 
-(use-package org
-  :hook
-  (org-mode . efs/org-mode-setup)
-  :config
-  (setq org-ellipsis " ▾"
-	org-hide-emphasis-markers t
-	org-hide-leading-stars t
-	org-agenda-files '("~/Project"))
-  (efs/org-font-setup))
+  (use-package org
+    :hook
+    (org-mode . efs/org-mode-setup)
+    :config
+    (setq org-ellipsis " ▾"
+          org-hide-emphasis-markers t
+          org-hide-leading-stars t
+          org-agenda-files '("~/Project"))
+    (efs/org-font-setup))
 
-(use-package org-bullets
-  :after org
-  :hook (org-mode . org-bullets-mode)
-  :custom
-  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  (use-package org-bullets
+    :after org
+    :hook (org-mode . org-bullets-mode)
+    :custom
+    (org-adapt-indentation t)
+    (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+
+
+(org-babel-do-load-languages
+  'org-babel-load-languages
+  '((emacs-lisp . t)
+    (python . t)))
+
+(push '("conf-unix" . conf-unix) org-src-lang-modes)
+
+(with-eval-after-load 'org
+  ;; This is needed as of Org 9.2
+  (require 'org-tempo)
+
+  (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+  (add-to-list 'org-structure-template-alist '("py" . "src python")))
 
 (defun efs/org-mode-visual-fill ()
   (setq visual-fill-column-width 100)

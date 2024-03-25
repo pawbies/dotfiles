@@ -1,8 +1,44 @@
-import = ["/home/choneyfox/.config/alacritty/colors.yml", "/home/choneyfox/.config/alacritty/fonts.yml"]
-live_config_reload = true
+[colors.bright]
+black = "0x4a697d"
+blue = "0x51b4ff"
+cyan = "0x5cdff0"
+green = "0x70d675"
+magenta = "0xc979d7"
+red = "0xfb8784"
+white = "0xffffff"
+yellow = "0xffe744"
+
+[colors.normal]
+black = "0x263640"
+blue = "0x42a5f5"
+cyan = "0x4dd0e1"
+green = "0x61c766"
+magenta = "0xba68c8"
+red = "0xec7875"
+white = "0xfff000"
+yellow = "0xfdd835"
+
+[colors.primary]
+background = "0x212B30"
+foreground = "0xc4c7c5"
+
+[font]
+size = 10	
+
+[font.bold_italic]
+family = "FiraCode Nerd Font Mono"
+style = "Bold Italic"
+
+[font.italic]
+family = "FiraCode Nerd Font Mono"
+style = "Italic"
+
+[font.normal]
+family = "FiraCode Nerd Font Mono"
+style = "Semibold"
 
 [shell]
-program = "/usr/bin/fish"
+program = "fish"
 args = ["--login"]
 
 [cursor]
@@ -19,8 +55,6 @@ WINIT_X11_SCALE_FACTOR = "1.0"
 [window]
 decorations = "full"
 dynamic_title = true
-#history = 10000
-#multiplier = 3
 opacity = 1
 startup_mode = "Windowed"
 
