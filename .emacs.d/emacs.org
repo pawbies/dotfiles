@@ -113,7 +113,7 @@
     :ensure t
     :init (doom-modeline-mode 1)
     :custom (
-             (doom-modeline-height 15)
+             (doom-modeline-height 30)
              (doom-modeline-bar-width 6)
              (doom-modeline-lsp t)
              (doom-modeline-github nil)
@@ -122,7 +122,7 @@
              (doom-modeline-minor-modes nil)
              (doom-modeline-persp-name nil)
              (doom-modeline-buffer-file-name-style 'truncate-except-project)
-             (doom-modeline-major-mode-icon nil))) ;; smaller modeline
+             (doom-modeline-major-mode-icon nil)))
 
   (use-package nyan-mode)
 #+end_src
