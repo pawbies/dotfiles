@@ -1,1 +1,1 @@
-("~/.dotfiles/" "~/code2know/")
+("~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/" "~/Coding/socks/" "~/.dotfiles/" "~/code2know/" "~/railstests/pri/" "~/Coding/kaworu/" "~/Coding/boys/src-tauri/" "~/Coding/testy/" "~/Coding/gami/" "~/Coding/rsarg/" "~/rusty/rfti/" "~/rusty/testy/" "~/rusty/opy/" "~/machine_learning/proj/build/" "~/machine_learning/proj/" "~/Coding/algo/" "~/Coding/playing/guesser/" "~/Coding/rustlings/" "~/testing/dbtesting/")

@@ -1,0 +1,13 @@
+:PROPERTIES:
+:ID:       eb440ac9-27b3-46f1-a3f9-2b3e61658428
+:END:
+#+title: Reliable Networks
+* Network Architecture
+Networks need to have 4 characteristics to meet user expectations:
+- Fault Tolerance
+- Scalability
+- Quality of Service (QoS)
+- Security
+
+* Fault Toleranc
+A network that is fault tolerant does not fall apart when one device fails.

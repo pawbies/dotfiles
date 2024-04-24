@@ -1,0 +1,17 @@
+;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("org-capture-last-stored"
+ (filename . "~/Documents/RoamNotes/20240420181139-reference_models.org")
+ (front-context-string . "* The Benefits o")
+ (rear-context-string . "eference Models\n")
+ (position . 94)
+ (last-modified 26147 60215 321354 193000))
+("femboymark"
+ (filename . "~/Documents/RoamNotes/20240328135242-femboys.org")
+ (front-context-string . "\nI think femboys")
+ (rear-context-string . "+title: Femboys\n")
+ (position . 85)
+ (last-modified 26117 26815 424515 27000))
+)

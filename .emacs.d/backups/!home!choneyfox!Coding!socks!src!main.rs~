@@ -1,0 +1,13 @@
+mod net;
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let mode = args.get(1).expect("Not enough arguments");
+
+    match mode.to_lowercase().as_str() {
+	"client" => net::client::start(),
+	"server" => net::server::start().expect("Failed"),
+	_ => println!("Hello World"),
+    }
+    
+}

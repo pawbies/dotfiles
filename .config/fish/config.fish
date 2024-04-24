@@ -4,4 +4,5 @@ if status is-interactive
     alias emacs="emacs -nw"
 
     fish_add_path -g ~/.dotfiles/.config/emacs/bin
+    fish_add_path -g ~/.juliaup/bin
 end

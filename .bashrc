@@ -2,7 +2,6 @@
 # ~/.bashrc
 #
 
-
 PS1='[\u@\h \W]\$ '
 
 # If not running interactively, don't do anything

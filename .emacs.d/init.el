@@ -13,7 +13,7 @@
 
 ;;(add-hook 'window-setup-hook 'on-after-init)
 
-(setq inhibit-startup-message t) ;disable default emacs startpage
+;;(setq inhibit-startup-message t) ;disable default emacs startpage
 (scroll-bar-mode -1)    ; disable the visual scrollbar
 (tool-bar-mode -1)      ;disable toolbar
 (tooltip-mode -1)       ;disable tooltips
@@ -22,7 +22,7 @@
 
 (setq visible-bell t)
 
-(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 110)
+(set-face-attribute 'default nil :font "FiraCode Nerd Font Mono" :height 110)
 
 (column-number-mode)
 (global-display-line-numbers-mode t)
@@ -33,8 +33,6 @@
                 shell-mode-hook
                 eshell-mode-hook))
   (add-hook mode (lambda() (display-line-numbers-mode 0))))
-
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 (require 'package)
 
@@ -119,8 +117,20 @@
 (use-package doom-themes
   :init (load-theme 'doom-tokyo-night t))
 
+(defun switchorgtheme ()
+  (load-theme 'spacemacs-light t))
+
+(use-package spacemacs-theme)
+
+;; (add-hook 'org-mode-hook 'switchorgtheme)
+
 ;; M-x all-the-icons-install-fonts
 (use-package all-the-icons)
+
+(use-package general)
+
+(defconst custom-leader "C-c c")
+(general-create-definer custom-leader-def :prefix custom-leader)
 
 (use-package projectile
   :diminish projectile-mode
@@ -155,76 +165,116 @@
          ("<tab>" . company-indent-or-complete-common))
   :custom
   (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
+  (company-idle-delay 0.0)
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-eldoc-render-all t)
+  (lsp-idle-delay 0.6)
+  (lsp-inlay-hint-enable)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
+  (lsp-rust-analyzer-display-parameter-hints nil)
+  (lsp-rust-analyzer-display-reborrow-hints nil)
+  :config
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
 
 (use-package company-box
   :hook (company-mode . company-box-mode))
 
-(defun efs/org-mode-setup ()
-    (org-indent-mode)
-    (variable-pitch-mode 1)
-    (visual-line-mode 1))
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :custom
+  (lsp-ui-peek-always-show t)
+  (lsp-ui-sideline-show-hover t)
+  (lsp-ui-doc-enable t))
+
+(defun fem/org-mode-setup ()
+      (load-theme 'doom-feather-light)
+      (org-indent-mode)
+      (variable-pitch-mode 1)
+      (visual-line-mode 1))
 
 
-  (defun efs/org-font-setup ()
-    ;; Replace list hyphen with dot
-    (font-lock-add-keywords 'org-mode
-                            '(("^ *\\([-]\\) "
-                               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+    (defun fem/org-font-setup ()
+      ;; Replace list hyphen with dot
+      (font-lock-add-keywords 'org-mode
+                              '(("^ *\\([-]\\) "
+                                 (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-    ;; Set faces for heading levels
-    (dolist (face '((org-level-1 . 1.2)
-                    (org-level-2 . 1.1)
-                    (org-level-3 . 1.05)
-                    (org-level-4 . 1.0)
-                    (org-level-5 . 1.1)
-                    (org-level-6 . 1.1)
-                    (org-level-7 . 1.1)
-                    (org-level-8 . 1.1)))
-      (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+      ;; Set faces for heading levels
+      (dolist (face '((org-level-1 . 1.1)
+                      (org-level-2 . 1.1)
+                      (org-level-3 . 1.05)
+                      (org-level-4 . 1.0)
+                      (org-level-5 . 1.1)
+                      (org-level-6 . 1.1)
+                      (org-level-7 . 1.1)
+                      (org-level-8 . 1.1)))
+        (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
 
-    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-    (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
-    (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-    (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+      ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+      (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+      (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+      (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+      (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+      (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
 
-  (use-package org
-    :hook
-    (org-mode . efs/org-mode-setup)
+    (use-package org
+      :hook
+      (org-mode . fem/org-mode-setup)
+      :config
+      (setq org-ellipsis " ▾"
+            org-hide-emphasis-markers t
+            org-hide-leading-stars t)
+            ;org-agenda-files '("~/Project"))
+      (fem/org-font-setup))
+
+    ;; (use-package org-bullets
+    ;;   :after org
+    ;;   :hook (org-mode . org-bullets-mode)
+    ;;   :custom
+    ;;   (org-adapt-indentation t)
+    ;;   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+(setq org-format-latex-options '(:foreground default :background default :scale 2.0 :html-foreground "Black" :html-background "Transparent" :html-scale 1.0 :matchers
+             ("begin" "$1" "$" "$$" "\\(" "\\[")))
+
+
+
+  (use-package org-superstar
+    :hook (org-mode . org-superstar-mode)
     :config
-    (setq org-ellipsis " ▾"
-          org-hide-emphasis-markers t
-          org-hide-leading-stars t
-          org-agenda-files '("~/Project"))
-    (efs/org-font-setup))
+    (setq org-superstar-headline-bullets-list
+          '("⇒" "◈" "○" "▷")))
 
-  (use-package org-bullets
-    :after org
-    :hook (org-mode . org-bullets-mode)
-    :custom
-    (org-adapt-indentation t)
-    (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+  (org-babel-do-load-languages
+    'org-babel-load-languages
+    '((emacs-lisp . t)
+      (python . t)
+      (haskell . t)))
 
+  (push '("conf-unix" . conf-unix) org-src-lang-modes)
 
+  (with-eval-after-load 'org
+    ;; This is needed as of Org 9.2
+    (require 'org-tempo)
 
-(org-babel-do-load-languages
-  'org-babel-load-languages
-  '((emacs-lisp . t)
-    (python . t)))
+    (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+    (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+    (add-to-list 'org-structure-template-alist '("py" . "src python"))
+    (add-to-list 'org-structure-template-alist '("src" . "src")))
 
-(push '("conf-unix" . conf-unix) org-src-lang-modes)
-
-(with-eval-after-load 'org
-  ;; This is needed as of Org 9.2
-  (require 'org-tempo)
-
-  (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
-  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("py" . "src python")))
+(use-package org-roam
+  :custom
+  (org-roam-directory "~/Documents/RoamNotes")
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n i" . org-roam-node-insert))
+  :config
+  (org-roam-setup))
 
 (defun efs/org-mode-visual-fill ()
   (setq visual-fill-column-width 100)
@@ -249,3 +299,50 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+(use-package page-break-lines)
+
+(use-package dashboard
+  :config
+  (setq dashboard-banner-logo-title "Welcome to Femboy Emacs"
+        dashboard-startup-banner 'official
+        dashboard-center-content t
+        dashboard-vertically-center-content t
+        dashboard-icon-type 'all-the-icons
+        dashboard-set-heading-icons t
+        dashbaord-set-file-icons t
+        dashboard-startupify-list '(dashboard-insert-banner
+                                    dashboard-insert-newline
+                                    dashboard-insert-banner-title
+                                    dashboard-insert-newline
+                                    dashboard-insert-navigator
+                                    dashboard-insert-newline
+                                    dashboard-insert-init-info
+                                    dashboard-insert-items
+                                    dashboard-insert-newline
+                                    dashboard-insert-footer)
+        dashboard-items '((recents   . 5)
+                          (bookmarks . 5)
+                          (projects  . 5)
+                          (agenda    . 5)
+                          (registers . 5))
+        dashboard-heading-icons '((recents   . "history")
+                                  (bookmarks . "bookmark")
+                                  (agenda    . "calendar")
+                                  (projects  . "rocket")
+                                  (registers . "database")))
+  (dashboard-setup-startup-hook))
+
+(use-package neotree
+  :config
+  (global-set-key [f8] 'neotree-toggle)
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow)))
+
+(setq backup-directory-alist
+      `(("." . ,(concat user-emacs-directory "backups"))))
+
+(custom-leader-def
+ "c" 'compile
+ "b" 'counsel-find-file)
+
+(global-set-key (kbd "<escape>") 'keyboard-escape-quit)

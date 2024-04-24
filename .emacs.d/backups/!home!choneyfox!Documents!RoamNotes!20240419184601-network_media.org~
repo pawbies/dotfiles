@@ -1,0 +1,5 @@
+:PROPERTIES:
+:ID:       cbfdd2f6-6c65-4af8-a692-b1f4b54ba486
+:END:
+#+title: Network Media
+Data can travel across a network on "media". This provides the channel over which the messages travels from source to destination.

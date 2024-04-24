@@ -23,7 +23,7 @@ background = "0x212B30"
 foreground = "0xc4c7c5"
 
 [font]
-size = 10	
+size = 10
 
 [font.bold_italic]
 family = "FiraCode Nerd Font Mono"
@@ -38,7 +38,7 @@ family = "FiraCode Nerd Font Mono"
 style = "Semibold"
 
 [shell]
-program = "fish"
+program = "/usr/bin/fish"
 args = ["--login"]
 
 [cursor]

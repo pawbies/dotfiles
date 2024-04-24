@@ -1,0 +1,68 @@
+#+title Machine Learning Notes
+#+OPTIONS: tex:nil
+
+* Intro
+** Instance Based Learning
+*** k-Nearest Neighbours
+The knn is pretty easy, it just looks at a datapoint and compares it with it's k nearest neighbours like the name says.
+It then gets assigned the class that most of it's surrounding datapoints have.
+
+In Math:
+
+\begin{equ}
+P = \{a_1(P), a_2(P), ...a_n(P)\}\newline
+d(P_i, P_j) = \sqrt{\displaystyle\sum_{l=1}^{n}{(a_l(P_i) - a_l(P_j))}^2}
+\end{equ}
+
+In Code:
+
+#+begin_src python :results output
+
+  from math import sqrt
+
+  k = 3
+
+  PS = [[5, 3, 8, 'red'],
+        [1, 6, 1, 'blue'],
+        [100, 2, 2, 'blue'],
+        [3, 6, 3, 'red'],
+        [3, 4, 7, 'blue'],
+        [3, 8, 7, 'blue'],
+        [-5, 9, 0, 'blue'],
+        [4, 3, 6, 'red'],
+        [6, 4, 7, 'red']]
+
+  new = [5, 4, 7, None]
+
+  def distance(x, y=new):
+      if len(x) != len(y):
+          return None
+
+      distance = 0
+      for i in range(len(x)-1):
+          diff = x[i] - y[i]
+          distance += diff**2
+
+      return sqrt(distance)
+
+  sortedPS = sorted(PS, key=distance)
+
+  red = 0
+  blue = 0
+
+  for i in range(k):
+      if sortedPS[i][-1] == 'red':
+          red+=1
+      elif sortedPS[i][-1] == 'blue':
+          blue+=1
+
+  if red > blue:
+      print("The new point is red")
+  elif blue > red:
+      print("The new point is blue")
+  else:
+      print("Can't say")
+#+end_src
+
+#+RESULTS:
+: The new point is red

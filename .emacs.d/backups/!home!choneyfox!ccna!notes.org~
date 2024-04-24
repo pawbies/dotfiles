@@ -1,0 +1,1924 @@
+* Basic Device Configuration
+** Configure a Switch with Initial Settings
+*** Switch Boot Sequence
+When you power on a switch it goes through 5 steps:
+1. POST (power-on self-test): It tests the CPU, DRAM and the flash file system
+2. Boot Loader is loaded
+3. Boot Loader performs low level CPU initialization
+4. Boot Loader initializes the flash file system
+5. Boot Loader loads the IOS operating system and gives control to the OS
+
+*** The boot system command
+The switch attemptes to automatically boot according to the BOOT enviornment variable.
+
+One can also boot an image manually with the command:
+#+begin_src 
+  boot system flash:/path-to-img/femboy.bin
+#+end_src
+
+The command is split into different parts:
+| *Command*      | *Definition*              |
+|--------------+-------------------------|
+| boot system  | Main command            |
+| flash:       | Storage device          |
+| path-to-img/ | Path to the file system |
+| femboy.bin   | IOS file name           |
+
+*** Recovering from a System Crash
+The boot loader provides access to the switch if the OS cannot be loaded.
+
+To get access you can follow these steps:
+1. Connect PC to switch console port and do some terra term stuff
+2. Unplug the switch power cable
+3. Reconnect the switch power cable, then within 15 seconds press and hold the *Mode* button while the system LED is flashing green
+4. Release the button when the LED turns amber and solid green
+5. DONE
+
+   You can then type help or ? to get some help
+
+   You can use the *set* command to view the BOOT enviornment variable or *flash_init* to initialize the flash file system, use *dir flash:* to you the directories and files. To change the BOOT variable image do
+
+   #+begin_src 
+     BOOT=flash:/path-to-img/femboy_new.img
+   #+end_src
+
+*** Switch Mangement Access
+If you want to remotly manage the switch it has to have a SVI (switch virtual interface) with an IPv4 address and subnet mask *or* an IPv6 address and a prefix length.
+The switch also needs to be configured with an default gateway.
+
+*** SVI Config Example
+
+#+begin_src 
+  S1#en
+  S1#conf t
+  S1#ip default-gateway 172.17.99.1
+  S1#int vlan 99
+  S1#ip address 172.17.99.11 255.255.255.0
+  S1#ipv6 address 2001:db8:acad:99::11/64
+  S1#no shutdown
+#+end_src
+
+** Configure Switch Ports
+*** Duplex Communication
+Duplex specifies if data can be sent and recived simultaneously.
+Full Duplex is yes.
+Half Duplex no.
+[[./res/duplex.png]]
+
+*** Configure Switch Ports at the Physical Layer
+Here are some commands to configure ports
+| *Command*                    | *Task*                                 |
+|----------------------------+--------------------------------------|
+| S1(config-if)# duplex full | Set the interface to use Full Duplex |
+| S1(config-if)# speed 100   | Sets the seed for the interface      |
+
+*** Auto-MDIX
+Traditionally you have to connect switches to switches and switches router with certain cables.
+Straight outa stupid town.
+
+So Auto-MDIX (automatic medium-dependent interface crossover) automatically detects what cable is in use the and acts accordingly.
+If it's not enabled by default dou can enable this with:
+#+begin_src 
+  S1(config-if)# mdix auto
+#+end_src
+
+*** Switch Show commands
+| *Command*                            | *Task*                                    |
+|------------------------------------+-----------------------------------------|
+| S1# show interfaces [interface-id] | Interface status and config             |
+| S1# show startup-config            | Starup Config                           |
+| S1# show running-config            | Running Config                          |
+| S1# show flash                     | Information about the flash file system |
+| S1# show version                   | System hardware and software status     |
+| S1# show history                   | Command history                         |
+| S1# show ip interface              | IP information about an interface       |
+| S1# show mac-address-table         | Mar address table                       |
+
+** Secure Remote Access
+*** Telnet Operation
+Telnet is poopoo and you should not use it
+
+*** SSH Operation
+SSH is pretty cool and you should use it
+
+*** Verify SSH Support
+You can type the *show version* command and if the IOS filename includes and *k9* you can use SSH
+
+*** Configuring SSH
+Follow these steps to configure SSH:
+1. Verify Support with *show ip ssh* if the switch does not recognize the command... oh well doesn't support SSH
+2. Configure IP domain with *ip domain-name femboy.com*
+3. Generate RSA key pairs with *crypto key generate rsa*
+4. Create a local login with *username admin secret ccna*, you can also use an authentication server but... no
+5. Configure VTY lines with the commands, this is more than one command so I'll just put an code block here:
+   #+begin_src 
+  S1(config)# line vty 0 15
+  S1(config-line)# transport input ssh
+  S1(config-line)# login local
+  S1(config-line)# exit
+   #+end_src
+6. Enable SSH Version 2 with *ip ssh version 2*
+
+** Basic Router Config
+Who would've guessed configuring routers is also kinda important.
+ME!
+Hehe...
+How silly I am...
+
+Anyway here is a basic example of a router config:
+#+begin_src 
+  Router# configure terminal
+  Enter configuration commands, one per line.  End with CNTL/Z.
+  Router(config)# hostname R1
+  R1(config)# enable secret class
+  R1(config)# line console 0
+  R1(config-line)# password cisco
+  R1(config-line)# login
+  R1(config-line)# exit
+  R1(config)# line vty 0 4
+  R1(config-line)# password cisco
+  R1(config-line)# login
+  R1(config-line)# exit
+  R1(config)# service password-encryption
+  R1(config)#
+#+end_src
+
+*** Dual Stack Topology
+I saw i funny meme about topology and bottomology on reddit a while ago.
+Funny stuff.
+
+I have no idea what this chapter is about so here is a screenshot:
+[[./res/dual_stack_top.png]]
+
+*** Configuring Router Interfaces
+This chapter finally makes sense of the last one...
+So switches support LANs and Router support LANs and WANs... I think that's it.
+
+Now they are talking about how it is important for different WAN connections to have certain options.
+Here is an example of an interface config on a router:
+
+#+begin_src 
+  R1(config)# interface gigabitethernet 0/0/0
+  R1(config-if)# ip address 192.168.10.1 255.255.255.0 
+  R1(config-if)# ipv6 address 2001:db8:acad:1::1/64 
+  R1(config-if)# description Link to LAN 1
+  R1(config-if)# no shutdown
+  R1(config-if)# exit
+  R1(config)# interface gigabitethernet 0/0/1
+  R1(config-if)# ip address 192.168.11.1 255.255.255.0 
+  R1(config-if)# ipv6 address 2001:db8:acad:2::1/64 
+  R1(config-if)# description Link to LAN 2
+  R1(config-if)# no shutdown
+  R1(config-if)# exit
+  R1(config)# interface serial 0/0/0
+  R1(config-if)# ip address 209.165.200.225 255.255.255.252 
+  R1(config-if)# ipv6 address 2001:db8:acad:3::225/64 
+  R1(config-if)# description Link to R2
+  R1(config-if)# no shutdown
+  R1(config-if)# exit
+  R1(config)#
+#+end_src
+
+*** IPv4 Loopback Interfaces
+A loopback is a logical interface inside the router that can be used in various scenerios such as simulating more networks.
+You can configure one like so:
+
+#+begin_src 
+  R1(config)# interface loopback 0
+  R1(config-if)# ip address 10.0.0.1 255.255.255.0
+  R1(config-if)# exit
+  R1(config)#
+#+end_src
+
+** Verify Directly Connected Networks
+There are again many show commands you can use:
+
+| *Command*                                      | *Task*                                      |
+|----------------------------------------------+-------------------------------------------|
+| show ip int br                               | Full summary of all IPv4 or v6 interfaces |
+| show running-config interface <interface id> | Commands applied to this interface        |
+| show ip route                                | Shows the routing table                   |
+
+*** Filter Show Command Output
+You can use the *| <thingy>* thing to filter output *thingy* can be one of these things:
+- section: Find a section
+- include: All lines that include a certain expression
+- exclude: I think you know what this does
+- begin: Skip some stuff and begin at at a later point
+
+*** Command History Feature
+This is not important at all but you can set the history size and you can output the history:
+
+#+begin_src 
+  R1# terminal history size 200
+  R1# show history
+#+end_src
+
+* Switching Concepts
+** Frame Forwarding
+*** Switching in Networking
+Switching and fowarding is a universal in networking and telecommunications.
+The decision on how do forward traffic is based on the flow of traffic.
+
+There are two terms no one has ever head of but these are:
+- *Ingress*: This is a port where a frame enters the device
+- *Egress* : This is a port where a frame leaves the device
+
+  The only redeeming quality a switch has over a hub is it's ability to keep a MAC address table.
+  This table contains a mapping from mac addresses to ports.
+  And the switch will forward traffic based on this table.
+
+*** The Switch MAC Address Table
+As I just said a switch has a MAC address table that it builds up over time. It it stored in CAM (content addressable memory), this is a special type of memory for high-speed applications. The MAC address table is sometimes also called the cam table.
+
+*** The Switch Learn and Forward Method
+The following 2-Step proccess for performed for every frame that enters a switch:
+
+*1. Learn - Examine the Source MAC Address*
+The Switch checks every frame for new information to learn.
+If the source MAC address is not in the table it is gets associated with the Ingress Port (haha smart i know).
+If the source MAC address does exist the refresh timer is updated.
+(By default a entry in the cam table only exists for 5 minutes)
+If the source MAC address exists but on a different port then the entry gets updated to use the newer port.
+
+*2. Forward - Examining the Destination MAC Address*
+If the dest. MAC adress is a unicast address it will look for a match in it's cam table.
+If the address is in the table it simple get's forwarded.
+If this is not the case the frame get's send out of all ports except the Ingress.
+
+*** Switching Forwarding Methods
+Layer 2 switches have 2 different methods to switch frames:
+- *Store-and-forward switching*
+  Makes a decision after is received the entire frame and checked the frame for errors.
+  This is the primary switching method.
+  
+- *Cut-through switching*
+  Starts with the forwarding after the MAC address and egress port have been determined.
+  
+*** Store-and-Forward Switching
+This one drops invalid frames that do not pass the FCS check.
+
+This has two primary characteristics:
+1. *Error checking* and
+2. *Automatic buffering*
+
+   Automatic buffering means it supports any mix of Ethernet speeds.
+
+   [[./res/store_a_forw.png]]
+
+*** Cut-Through Switching
+This method does not perform any checks so it also forwards invalid frames.
+But this also means that it is much faster.
+
+[[./res/cut_through.png]]
+
+** Switching Domains
+*** Collision Domain
+A Collision Domain apparently only exist if a port operates in half-duplex.
+It is the domain in which a collision can occur meaning frames can collide.
+
+*** Broadcast Domain
+The broadcast domain is a collection of connected switches. It can only be divided by a router.
+Meaning the broadcast domain is the range of all the devices a MAC broadcast will reach.
+
+*** Alleviate Network Congestion
+Modern switches have built in features that can help with network congestion.
+For example the automatic use of full duplex to reduce collision domains.
+Others are:
+- Fast port speeds
+- Fast internal switching
+- Large frame buffers
+- High port density
+
+* VLANs
+** Overview of VLANs
+*** VLAN Definitions
+VLANs provide segmentation and organization in a network. They are based on logical connection instead of physical ones.
+VLANs enable devices to connect to the same network regardless of the physical switch in use or their location.
+[[./res/vlans.png]]
+They also provide broadcasts to be sent exclusivly to the VLAN.
+And by using them you can implement security policies based on the VLAN of a device.
+
+*** Benefits of a VLAN Design
+Each VLAN corresponds to an IP network.
+
+Here is a list of benefits:
+| *Benefit*                   | *Description*                                                  |
+|---------------------------+--------------------------------------------------------------|
+| Smaller broadcast domains | Less devices in the broadcast domain                         |
+| Improved security         | Only users of the same VLAN can communicate without a router |
+| Improved IT efficiency    | VLANs simplify network management and can be given names     |
+| Reduced cost              | No need for expensive network upgrades                       |
+| Better performance        | Smaller broadcast = Less Traffic = More performance          |
+| Simpler management        | Seperate functions makes managing stuff easier               |
+
+*** Types of VLANs
+There are different VLANs for different things:
+- Default VLAN: Is VLAN 1 and all Layer 2 traffic is associated with it by default.
+  Some other important things about VLAN 1 are:
+  - All ports are assigned to it by default
+  - It is the Native VLAN by default
+  - And the Management VLAN
+  - It cannot be renamed or deleted
+
+- Data VLAN: It is used for user traffic
+- Native VLAN: Traffic from a VLAN must be tagged with it's VLAN ID when sent to another switch. Trunk ports are used between switches to support this.
+- Management VLAN: For management traffic, meaning: SSH, Telnet SNMP...
+- Voice VLAN: This is a seperate VLAN for VoIP (Voice over IP)
+
+** VLANs in a Multi-Switched Environment
+*** Defining VLAN Trunks
+Trunk Ports do not belong to a specific VLAN.
+They are used to propagate traffic between switches.
+This makes it possible for devices on the same VLAN but on different switches to communicate without a router.
+
+*** Network with/without VLANs
+This is rather hard to explain in words so just watch the video in netacad.
+This is another demonstration on broadcast domains with VLANs.
+
+*** VLAN Identification with a Tag
+By default a frame does not contain information about VLANs, therefore when a VLAN frame is placed on a trunk this info must be added. This is also called tagging. They use the IEEE 802.1Q header for this. It includes a 4 byte tag with infos about the VLAN. Those include:
+- *Type*: The tag protocol ID (TPID). This is 0x8100 for Ethernet
+- *User Priority*: "A 3-bit value that supports level or service implementation."
+- *Canonical Format Identifier (CFI)*: "A 1-bit identifier that enables Token Ring frames to be carried across Ethernet links."
+- *VLAN ID*: The VLAN identification number
+
+[[./res/vlan_header.png]]  
+
+*** Native VLANs and 802.1Q Tagging
+This chapter is so confusing so better read the original because i have no idea how any of this works.
+
+When a untagged frame comes in, it is assumed to belong to the native vlan and get's send to the trunk ports.
+Frames should not have tags with the native vlan. If they do they are dropped.
+
+*** Voice VLAN Tagging
+For VoIP a seperate Voice VLAN is required. This enables some quality of service and security policies to be applied.
+You can connect you IP phone to the switch and a PC to the phone.
+
+The switch access port sends CDP packets instructing the attached IP phone to send voice traffic in one of three ways. The method used varies based on the type of traffic:
+
+- Voice VLAN traffic must be tagged with an appropriate Layer 2 class of service (CoS) priority value
+- Access VLAN traffic can also be tagged with a Layer 2 CoS priority value
+- Access VLAN is not tagged (no Layer 2 CoS priority value)
+
+[[./res/voip.png]]  
+
+** VLAN Configuration
+*** VLAN Ranges on Catalyst Switches
+There are 2 VLAN Ranges:
+- Normal Range VLANs:
+  - Used in small- and medium-sized business and and enterprise networks
+  - Identified with a VLAN ID from 1 to 1005
+  - 1002 - 1005 are reserved for legacy network technologies
+  - 1, and 1002 - 1005 are created automatically and cannot be removed
+  - Configuration is stored in flash memory (VLAN database file vlan.dat)
+  - When configured VLAN trunking protocoll (VTP) helps synchroize VLAN databases
+    
+- Extended Range VLANs:
+  - Used by service providers and global enterprises
+  - VLAN IDs from 1006 to 4094
+  - Config is saved in the running config
+  - Fewer VLAN features than normal range vlans
+  - Requires VTP transparent mode configuration
+
+*** VLAN Creation Example
+
+#+begin_src 
+  Switch# configure terminal
+  Switch(config)# vlan 69
+  Switch(config-vlan)# name femlan
+  Switch(config-vlan)# end
+  #+end_src
+
+*** VLAN Port Assignment Example
+
+#+begin_src 
+  S1# configure terminal
+  S1(config)# interface fa0/6
+  S1(config-if)# switchport mode access
+  S1(config-if)# switchport access vlan 20
+  S1(config-if)# end
+#+end_src
+
+*** Data and Voice VLANs
+Normaly an access port can only be configured to one VLAN at a time, the only exception is when you connect an IP phone and a PC to the phone.
+
+*** Data and Voice VLAN Example
+
+#+begin_src 
+  S3(config)# vlan 20
+  S3(config-vlan)# name student
+  S3(config-vlan)# vlan 150
+  S3(config-vlan)# name VOICE
+  S3(config-vlan)# exit
+  S3(config)# interface fa0/18
+  S3(config-if)# switchport mode access
+  S3(config-if)# switchport access vlan 20
+  S3(config-if)# mls qos trust cos
+  S3(config-if)# switchport voice vlan 150
+  S3(config-if)# end
+  S3#
+#+end_src
+(Apparently the implementation of QoS is "beyond the scope of this course.")
+
+*** Verify VLAN Information
+There are of course some show commands for vlans:
+| *Command*          | *Task*                                             |
+|------------------+--------------------------------------------------|
+| show vlan brief  | Display name, status, and ports of all the vlans |
+| id <vlan-id>     | Display infos about the specified vlan           |
+| name <vlan-name> | Display infos about the specified vlan           |
+| summary          | Display vlan summary information                 |
+
+*** Delete VLANs
+The *no vlan <vlan-id>* command deleted a vlan, you should move all ports to another vlan before doing so because they will be unable to communicate until you do so.
+
+** VLAN Trunks
+*** Trunk Configuration Commands
+We'll just skip this becaue the next subchapter is an example and the command names really speak for themselfs.
+
+*** Trunk Configuration Example
+#+begin_src 
+  S1(config)# interface fastEthernet 0/1
+  S1(config-if)# switchport mode trunk
+  S1(config-if)# switchport trunk native vlan 99
+  S1(config-if)# switchport trunk allowed vlan 10,20,30,99
+  S1(config-if)# end
+#+end_src
+
+*** Reset Trunk to the Default State
+You can use the commands *no switchport trunk allowed vlans* and *no switchport trunk native vlan* to the allowed vlans and set the native vlan back to 1.
+
+** Dynamic Trunking Protocol
+*** Intoduction to DTP
+Some cisco switches support DTP, a proprietary protocol that allows them to automatically negotiate trunking with neighboring devices.
+
+On Cisco Catalyst 2960 and 3650 it uses dynamic auto by default (whatever this means).
+You can do this to prevent him from sending DTP frames:
+#+begin_src 
+  S1(config-if)# switchport mode trunk
+  S1(config-if)# switchport nonegotiate
+#+end_src
+and to re-enable it:
+#+begin_src 
+  S1(config-if)# switchport mode dynamic auto
+#+end_src
+
+*** Negotiated Interface Modes
+You can choose some cool options in the *switchport mode* command:
+| *Option*            | *Description*                                                              |
+|-------------------+--------------------------------------------------------------------------|
+| access            | Permanent nontrunking mode                                               |
+| dynamic auto      | Becomes trunk if neighboring interface is set to trunk or desirable mode |
+| dynamic desirable | Makes interface attempt to convert neighboring interface to trunk        |
+| trunk             | Permanent trunking mode and negotiates to also convert neighbor          |
+
+*** Results of a DTP Configuration
+I'm not copying this table, hell nah.
+Check netacad if you wanna see it.
+
+* Inter-VLAN Routing
+** Inter-VLAN Routing Operation
+*** What is Inter-VLAN Routing
+Hosts of different VLANs can only communicate if there is a router or a layer 3 switch to provide routing services.
+There are 3 routing options:
+- Legacy Inter-VLAN routing: This is a legacy solution, it does not scale well
+- Router-on-a-Stick: I love this one
+- Layer 3 switch + switched virtual interfaces (SVIs): most scalable solution
+
+*** Legacy Inter-VLAN Routing
+It relies on multiple ethernet interfaces, each cable connection for one VLAN. Stoopid.
+[[./res/leg_routing.png]]
+
+*** Router-on-a-Stick Inter-VLAN Routing
+This method only requires one ethernet connection.
+This interface is then configured as an 802.1Q trunk and is connected to a layer 2 switch trunk port.
+The router interface is then configured with subinterfaces for each vlan.
+
+*** Inter-VLAN Routing on a Layer 3 Switch
+The most modern version.
+And here are all the advantages:
+- Faster because it is hardware switched and routed
+- No external links to the router required
+- You can also use etherchannels to increase bandwidth
+- Lower latency because frames don't have to leave the switch
+- More commonly deployed in a campus LAN than routers
+
+  The only disadventage is the price. 
+
+** Router on a Stick
+This chapter is so much yapping so here is the Router Config because the rest is only about creating VLANs on switches and all that boring stuff.
+
+You can also have the picture of the scenario so it all makes more sense:
+[[./res/roas_sce.png]]
+
+#+begin_src 
+  R1(config)# interface G0/0/1.10
+  R1(config-subif)# description Default Gateway for VLAN 10
+  R1(config-subif)# encapsulation dot1Q 10
+  R1(config-subif)# ip add 192.168.10.1 255.255.255.0
+  R1(config-subif)# exit
+  R1(config)#
+  R1(config)# interface G0/0/1.20
+  R1(config-subif)# description Default Gateway for VLAN 20
+  R1(config-subif)# encapsulation dot1Q 20
+  R1(config-subif)# ip add 192.168.20.1 255.255.255.0
+  R1(config-subif)# exit
+  R1(config)#
+  R1(config)# interface G0/0/1.99
+  R1(config-subif)# description Default Gateway for VLAN 99
+  R1(config-subif)# encapsulation dot1Q 99
+  R1(config-subif)# ip add 192.168.99.1 255.255.255.0
+  R1(config-subif)# exit
+  R1(config)#
+  R1(config)# interface G0/0/1
+  R1(config-if)# description Trunk link to S1
+  R1(config-if)# no shut
+  R1(config-if)# end
+  R1#
+#+end_src
+
+** Layer 3 Switch
+*** Inter-VLAN Routing on a Layer 3 Switch
+Again here is the image with the configuration:
+[[./res/ltsiv.png]]
+
+#+begin_src 
+  D1(config)# vlan 10
+  D1(config-vlan)# name LAN10
+  D1(config-vlan)# vlan 20
+  D1(config-vlan)# name LAN20
+  D1(config-vlan)# exit
+  D1(config)#
+
+  D1(config)# interface vlan 10
+  D1(config-if)# description Default Gateway SVI for 192.168.10.0/24
+  D1(config-if)# ip add 192.168.10.1 255.255.255.0
+  D1(config-if)# no shut
+  D1(config-if)# exit
+  D1(config)#
+  D1(config)# int vlan 20
+  D1(config-if)# description Default Gateway SVI for 192.168.20.0/24
+  D1(config-if)# ip add 192.168.20.1 255.255.255.0
+  D1(config-if)# no shut
+  D1(config-if)# exit
+  D1(config)#
+
+  D1(config)# interface GigabitEthernet1/0/6
+  D1(config-if)# description Access port to PC1
+  D1(config-if)# switchport mode access
+  D1(config-if)# switchport access vlan 10
+  D1(config-if)# exit
+  D1(config)#
+  D1(config)# interface GigabitEthernet1/0/18
+  D1(config-if)# description Access port to PC2
+  D1(config-if)# switchport mode access
+  D1(config-if)# switchport access vlan 20
+  D1(config-if)# exit
+  D1(config)#
+
+  D1(config)# ip routing
+  D1(config)#
+#+end_src
+
+*** Routing on a Layer 3 Switch
+Apparently a layer 3 switch can also do routing with ospf.
+[[./res/ltsr.png]]
+
+#+begin_src 
+  D1(config)# interface GigabitEthernet0/0/1
+  D1(config-if)# description routed Port Link to R1
+  D1(config-if)# no switchport
+  D1(config-if)# ip address 10.10.10.2 255.255.255.0
+  D1(config-if)# no shut
+  D1(config-if)# exit
+  D1(config)#
+  D1(config)# ip routing
+  D1(config)#
+  D1(config)# router ospf 10
+  D1(config-router)# network 192.168.10.0 0.0.0.255 area 0
+  D1(config-router)# network 192.168.20.0 0.0.0.255 area 0
+  D1(config-router)# network 10.10.10.0 0.0.0.3 area 0
+  D1(config-router)# ^Z
+  D1#
+#+end_src
+
+** Troubleshoot Inter-VLAN Routing
+This chapter is also kinda useless and so i only put the subchapter "Common Inter-VLAN Issues" in here.
+
+
+| *Issue Type*                  | *How to fix*          | *How to Verify*              |
+|-----------------------------+---------------------+----------------------------|
+| Missing VLANs               | Create VLAN         | show vlan [brief]          |
+| Switch Trunk Port Issues    | Check config        | show interfaces trunk      |
+| Switch Access Port Issues   | Assign correct VLAN | show interfaces switchport |
+| Router Configuration Issues | Check config        | show ip interface brief    |
+
+* STP-Concepts
+** Purpose of STP
+*** Redundancy in Layer 2 Switched Networks
+Redundancy is an important aspect in networking to prevent single points for failure. However redundant paths in switched networks may cause physical and logical layer 2 loops.
+
+Ethernet LANs require a single path between two devices. A loop in such network can cause continued propagation of frames.
+
+*** Spanning Tree Protocol
+STP is a loop prevention network protocol that allows redundant paths while creating a loop-free topology.
+
+*** Issues with Redundant Switch Links
+Path redundancy in a network without STP can cause several issues:
+- CAM table instability
+- Link saturation
+- High CPU utilization on switches and end devices
+
+  Unlike Layer 3 protocols, layer 2 ethernet does not have a mechanism to recognize and eliminate endlessly looping frames.
+  (Like the TTL (time to live) in IPv4 or IPv6)
+
+*** Layer 2 Loops
+Layer 2 loops can cause broadcasts, multicasts and unknown unicasts to loop endlessly. This can take down a network in only a few seconds.
+
+*** Broadcast Storm
+A broadcast storm is a high number of broadcasts overwhelming a network.
+They can be caused by hardware problems or from a layer 2 loop in the network.
+
+*** The Spanning Tree Algorithm (STA)
+STP is based on an algorithm by Radia Perlman.
+
+STP prevents loops by using strategically placed "blocking-state" ports.
+The switches are also able to compensate for failures by unblocking previously blocked ports.
+
+The algorithm works like this:
+[[./res/stp0.png]]
+
+1. Selection of a root bridge
+   The first step is to select a single root bridge.
+   [[./res/stp1.png]]
+   
+2. Block Redundant Paths
+   STP ensures that there is only one logical path to all desinations in the networks and blocks all other links.
+   [[./res/stp2.png]]
+
+3. Link Failure Causes Recalculations
+   Incase of a cable or switch failure STP recalculated the paths and unblocks necessary ports.
+   [[./res/stp3.png]]
+ 
+** STP Operations
+*** Steps to a Loop-Free Topology
+STP builds a loop-free topology in 4 steps:
+1. Elect the root bridge
+2. Elect the root ports
+3. Elect the designated ports
+4. Block other ports
+
+   During STA and STP switches use BPDUs (Bridge Protocol Data Units) to share information about themselves and their connection. They are used to elect root, designated and blocked ports.
+   Each BPDU contains a BID (Bridge ID) that identifies the switch.
+
+   The BID is made up of the:
+   - *Bridge Priority*
+     Default priority for cisco switches is 32768, the range is 0 to 61440 in 4096 steps.
+     A lower priority is prefered.
+   - *Extended System ID*
+     A decimal value added to the bridge priority to identify the VLAN of the switch.
+   - *MAC Address*
+
+     [[./res/bid.png]]
+
+*** Elect the Root Bridge
+STA selects a single switch as the root bridge and uses it as the reference point for all path calculations.
+All switches in the broadcast doamin participate in the election process.
+
+A switch sends out BPDU frames with it's BID and the BID of the root bridge.
+The switch with the lowest BID will the selected as the root.
+
+At first all switches declare themselves as the root. Eventually they learn through the exchange of BPDUs the real root bridge.
+
+*** Impact of Default BIDs
+Because all switches have the same priority by default the MAC address is the only value that determines the root bridge.
+But if you want a specific switch to be the root you can give it a lower priority manually.
+
+*** Determine the Root Path Cost
+The root path cost of each switch gets calculated by the sum of all the individual path costs from the switch to the root.
+
+*** Elect the Root Ports
+Every non root switch will select one root port.
+The root port is the port closest to the root in terms of cost.
+
+[[./res/root_port.png]]
+
+*** Elect Designated Ports
+STA then select one designated port for each segment between two switches.
+It gets elected like so:
+"The designated port is a port on the segment (with two switches) that has the internal root path cost to the root bridge. In other words, the designated port has the best path to receive traffic leading to the root bridge."
+
+*** Block Ports
+Every Port That is not a root-, or designated port will be blocked.
+[[./res/sta_blocked.png]]
+
+*** Rest
+They then keep yapping about shit i don't really care.
+
+** Evolution of STP
+*** Different Versions of STP
+There are various implementations of the Spanning Tree Protocol.
+Cisco switches use PVST+ by default.
+
+There are many others:
+
+| *Version*     | *Infos*                                                                        |
+|-------------+------------------------------------------------------------------------------|
+| STP         | The original IEEE Version also called Common Spanning Tree (CST)             |
+| PVST+       | Per-VLAN Spanning Tree is a Cisco version of STP with various other features |
+| RSTP        | Rapid Spanning Tree Protocol is a faster evolution of STP by IEEE            |
+| 802.1D-2004 | Updated version of the STP standard with goofy name                          |
+| Rapid PVST+ | Cisco enhancement of RSTP that uses PVST+                                    |
+| MSTP        | Multiple Spanning Tree Protocol is another IEEE standard                     |
+| MST         | Multiple Spanning Tree is the Cisco implementation of MSTP                   |
+
+The features of PVST+:
+- PortFast
+- UpLinkFast
+- BackboneFast
+- BPDU guard
+- BPDU filter
+- Root guard
+- Loop guard
+
+*** RSTP Concepts
+RSTP  supersedes the original STP and has backwards compatability.
+It increases the speed of recalculations of the spanning tree.
+
+*** RSTP Port States and Port Roles
+STP and RSTP port states and roles are almost the same.
+
+States:
+[[./res/stp_states.png]]
+
+Roles:
+[[./res/stp_roles.png]]
+
+*** PortFast and BDPU Guard
+Whenever a device is connected to a switch port or when a switch is powered on, it goes through the listening and learning states. This in total takes 30 seconds.
+This time can present a problem for DHCP clients because they cannot discover DHCP servers during this time.
+Meaning that IPv4 clients will not receive valid addresses.
+
+You can configure a switch port with PortFast.
+This means the port goes from blocking to forwarding immediatly.
+This should only be done on access ports.
+If you do it on other ports you could create a spanning tree loop.
+
+In a valid PortFast config BPDUs shouldn't be received on PortFast-enabled switch ports because this would mean another switch is connected to this port.
+To prevent this Cisco switches support a feature called the BPDU guard.
+When this is enabled the switch port get's put into an error-disabled state whenever it receives a BPDU.
+This provides a secure response to invalid configurations.
+
+*** Alternatives to STP
+Another method with more efficiency and predictabilty would be routing with a layer 3 switch.
+Layer 3 routing also allowes redundant paths and loops in the topology.
+
+Some other technologies include:
+- Multi System Link Aggregation (MLAG)
+- Shortest Path Bridging (SPB)
+- Transparent Interconnect of Losts of Links (TRILL)
+
+* EtherChannel
+** Etherchannel Operation
+*** Link Aggregration
+Sometimes you need bandwidth or redundancy than a single switch port can offer.
+If you just connect multiple links STP will block the redundant ones.
+
+This is where etherchannel comes in. It allowes multiple physical links to be combined into one logical.
+
+*** EtherChannel
+EtherChannel was originally developed by Cisco.
+When it is configured the resulting virtual interface is called a port channel.
+
+*** Advantages of EtherChannel
+Adventages include:
+- Configuration consistancy
+- Cheaper than a faster switch
+- Load blancing between ports of an etherchannel
+- Tricking STP :)
+- Redundancy
+
+*** Impelmentaion Restrictions
+There are some restrictions:
+- Interface types like Fast Ethernet and Gigabit cannot be mixed
+- Up to eight physical links, Etherchannel provides full duplex and bandwidth up to 800 Mbps (FE) or 8 Gbps (GE)
+- Cisco Catalyst 2960 only supports 6 links in an etherchannel
+- Both devices need consistent port configuration mean only trunk to trunk
+- A configuration applied to the etherchannel interface will affect all ports within this etherchannel
+
+*** Auto-Negotiation Protocols
+Etherchannels can be formed through negotiation with using one of two protocols, Port Aggregation Protocol (PAgP) or Link Aggregation Control Protocol (LACP).
+
+It is also possible to configure a statis etherchannel without PAgP or LACP.
+
+*** PAgP Operation
+PAgP is the Cisco-proprietary protocol.
+PAgP packets are sent every 30 seconds.
+PAgP checks for configuration inconsistancy and manages link additions and failures between two switches.
+
+The modes for PAgP are:
+- *On*: This forces the interface to channel without PAgP. This mode does not exchange PAgP packets
+- *PAgP desirable*: This is the active negotiation state that tries to initiate negotiations with other interfaces.
+- *PagP auto*: This is the passive negotiation state. It will respond to negotiations but will not initiate it.
+
+  The modes must be compatible on each side.
+  
+*** PAgP Mode  Settings Example
+Here you can see how you can mix modes:
+
+| *S1*        | *S2*             | *Channel Establishment* |
+|-----------+----------------+-----------------------|
+| ON        | ON             | Yes                   |
+| ON        | Desirable/Auto | No                    |
+| Desirable | Desirable      | Yes                   |
+| Desirable | Auto           | Yes                   |
+| Auto      | Desirable      | Yes                   |
+| Auto      | Auto           | No                    |
+
+
+*** LACP Operation
+LACP is part of an IEEE specification.
+It provides the same benefits as PAgP.
+
+It's modes are:
+- *On*: This forces the interfaces to channel without LACP and they do not exchange LACP packets
+- *LACP active*: Like desireable
+- *LACP passive*: Like auto
+
+*** LACP Mode Settings Example
+Again here are the mode combinations:
+
+| *S1*      | *S2*             | *Channel Establishment* |
+|---------+----------------+-----------------------|
+| ON      | ON             | Yes                   |
+| ON      | Active/Passive | No                    |
+| Active  | Active         | Yes                   |
+| Active  | Passive        | Yes                   |
+| Passive | Active         | Yes                   |
+| Passive | Passive        | No                    |
+
+** Configure EtherChannel
+*** Configuration Guidelines
+These guidelines and restrictions are usefull:
+- EtherChannel support: All interfaces must support EtherChannel (? duh)
+- Speed and Duplex: All interfaces must operate with the same speed and duplex settings
+- VLAN match: All interfaces in an EtherChannel must belong to the same VLAN
+- Range of VLANs: The allowed range of VLANs must be the same on both devices
+
+*** LACP Configuration Example
+Here is an example to configure LACP:
+
+#+begin_src 
+  S1(config)# interface range FastEthernet 0/1 - 2
+  S1(config-if-range)# channel-group 1 mode active
+  S1(config-if-range)# exit
+  S1(config)# interface port-channel 1
+  S1(config-if)# switchport mode trunk
+  S1(config-if)# switchport trunk allowed vlan 1,2,20
+#+end_src
+
+** Verify and Troubleshoot EtherChannel
+*** Verify EtherChannel
+You have various show commands for etherchannel:
+- *show interfaces port-channel*
+- *show etherchannel summary*
+- *show etherchannel port-channel*
+- *show interfaces etherchannel*
+  
+*** Common Issues with EtherChannel Configurations
+Common Issues include:
+- Assigned ports are not in the same VLAN
+- Trunking was configured on some but not all ports
+- The allowed range of VLANs is not the same
+- PAgP and LACP configurations of the devices are not compatible
+  
+* DHCPv4
+** DHCPv4 Concepts
+*** DHCPv4 Server and Client
+Dynamic Host Configuration Protocol v4 assignes IPv4 addresses to hosts in a network with is kinda epic tbh.
+
+You can either have a dedicated DHCPv4 server or you can configure a Cisco router to provide DHCPv4 services.
+
+*** DHCPv4 Operation
+DHCPv4 workds in a client/server mode.
+The client can obtain a lease from the server.
+It than has to paeriodically contact the server to extend the lease.
+This ensures addresses can be reassigned when they are not longed needed by another host.
+
+*** Steps to Obtain a Lease
+Dora the Explora.
+
+The Steps are:
+1. DHCP Discover
+2. DHCP Offer
+3. DHCP Request
+4. DHCP Acknowledgment
+
+   [[./res/dhcp4steps.png]]
+
+*** Steps to Renew a Lease
+The Steps to renew a lease is the same only without the discover and offer.
+
+1. DHCP Request: before the lease expires the host sends a request to renew the lease.
+2. DHCP Acknowledgment: The server verifies the lease information by sending this.
+
+   [[./res/dhcp4renew.png]]
+
+** Configure a Cisco ISO DHCPv4 Server
+*** Steps to Configure a Cisco ISO DHCPv4 Server
+The Steps are as follows:
+1. Exlude IPv4 addresses
+
+   Normally you have some addresses reserves for network devices so you should exclude them.
+
+   #+begin_src 
+  Router(config)# ip dhcp excluded-address low-address [high-address]
+   #+end_src
+   
+2. Define a DHCPv4 pool name
+
+   IDK why but the pool need a name.
+   
+   #+begin_src 
+  Router(config)# ip dhcp pool pool-name
+  Router(dhcp-config)# 
+   #+end_src
+   
+3. Configure the DHCPv4 pool
+Then you can configure the pool with the informations you want the hosts to have.
+Here is a table with things you can do:
+
+| *Command*                                             | *Task*                           |
+|-----------------------------------------------------+--------------------------------|
+| network network-number [mask or / prefix-length]    | Define the address pool        |
+| default-router address [ address2….address8]        | Define the default gateway     |
+| dns server address address [ address2... address8 ] | Define the dns server          |
+| domain-name name                                    | Define the domain name         |
+| lease {days [hours [minutes]] or infinite}          | Define the lease duration      |
+| netbios-name-server address [address2... address8]  | Define the NETBIOS WINS server |
+
+*** Configuration Example
+There is an example of a Cisco router DHCPv4 Config
+
+[[./res/dhcp4conf.png]]
+
+#+begin_src 
+  R1(config)# ip dhcp excluded-address 192.168.10.1 192.168.10.9
+  R1(config)# ip dhcp excluded-address 192.168.10.254
+  R1(config)# ip dhcp pool LAN-POOL-1
+  R1(dhcp-config)# network 192.168.10.0 255.255.255.0
+  R1(dhcp-config)# default-router 192.168.10.1
+  R1(dhcp-config)# dns-server 192.168.11.5
+  R1(dhcp-config)# domain-name femboy.com
+  R1(dhcp-config)# end
+  R1#
+#+end_src
+   
+*** Verify DHCPv4
+Another batch of show commands fresh out of the oven.
+
+- *show running-config | section dhcp*
+- *show ip dhcp binding*
+- *show ip dhcp server statistics*
+- *ipconfig /all* (on the PC)
+
+*** Disable the Cisco ISO DHCPv4 Server
+The DHCPv4 servic is enabled by default. This is also dumb but whatever.
+To disable and re-enable it do this:
+
+#+begin_src 
+R1(config)# no service dhcp
+R1(config)# service dhcp
+R1(config)# 
+#+end_src
+
+*** DHCPv4 Relay
+In some network structures the DHCPv4 server might not me on the same network as the hosts.
+For them to still receive an ip address you have to configure a relay agent.
+
+You can do this on a Cisco router with this command:
+
+#+begin_src 
+  R1(config)# interface g0/0/0
+  R1(config-if)# ip helper-address 192.168.11.6
+  R1(config-if)# end
+  R1#
+#+end_src
+
+g0/0/0 is the interface that receives the DHCP discover broadcast.
+
+*** Other Service Broadcast Relayed
+By default the ip-helper-address command also forwards:
+- Time (Port 37)
+- TACACS (Port 49)
+- DNS (Port 53)
+- DHCP/BOOTP server (Port 67)
+- DHCP/BOOTP client (Port 68)
+- TFTP (Port 69)
+- NetBIOS name service (Port 137)
+- NetBIOS datagram service (Port 138)
+    
+** Configure a DHCPv4 Client
+*** Cisco Router as a DHCPv4 Client
+Sometimes you need an interface on a router to receive an ip address from DHCP, for example from the ISP.
+You can use the *ip address dhcp* command to configure that.
+
+*** Configuration Example
+This is an example for the last subchapter.
+
+#+begin_src 
+  SOHO(config)# interface G0/0/1
+  SOHO(config-if)# ip address dhcp
+  SOHO(config-if)# no shutdown
+#+end_src
+
+*** Home Router as DHCPv4 clients
+Since home routers all have different interfaces that you can access through a browser you are on your own here.
+Good luck.
+
+* SLAAC and DHCPv6
+** IPv6 GUA Assignment
+*** IPv6 Host Configuration
+GUA means Global Unicast Address btw.
+
+You can either use SLAAC or DHCPv6 for your host configuration.
+
+*** IPv6 Host Link-Local Address
+When you automate IPv6 addressing you have 3 possible methods you can choose from.
+The Router sends RAs (Router Advertisments) that tell the host how to get their ip address.
+The IPv6 address is automatically created by the host when it boots.
+
+*** IPv6 GUA Assignment
+The IPv6 GUA can be assigned dynamically using stateless and stateful services.
+All methods here use ICMPv6 RA messages to suggest to the host how to create or aquire it's IPv6 address.
+
+[[./res/ip6gua.png]]
+
+*** Three RA Message Flags
+The decision of how to obtain the IPv6 address depends on the setting within the RA message.
+You can set one of three flags:
+- *A Flag*: Address Autoconfiguration Flag. Use Stateless Address Autoconfiguration (SLAAC) to create an IPv6 GUA.
+- *O Flag*: Other Configuration Flag. Other information is available on a DHCPv6 server.
+- *M Flag*: Managed Address Configuration Flag. Use a stateful DHCPv6 server to obtain an IPv6 GUA.
+  
+[[./res/ra.png]]
+
+** SLAAC
+*** SLAAC Overview
+Not every network has a DHCPv6 server.
+So SLAAC enables hosts to create their own GUA.
+
+SLAAC is a stateless service. Meaning that there is no server that keeps track of the addresses.
+
+SLAAC uses ICMPv6 RA messages to provide hosts with addressing and other configuration infos that normally would be provided by a DHCP server.
+
+RA messages are sent by an IPv6 Router every 200 seconds.
+
+A host can also send a Router Solcation (RS) message requesting that an IPv6 router to rend an RA.
+
+*** Enabling SLAAC
+You can enable SLAAC with the command:
+
+#+begin_src 
+  R1(config)# ipv6 unicast-routing
+#+end_src
+
+*** SLAAC Only Method
+The SLAAC Only Method is enabled by default when you turn on ipv6 unicast-routing.
+All ethernet interfaces with an GUA configured will send RAs with the A Flag.
+
+*** ICMPv6 RS Messages
+A router will send RA messages every 200 seconds.
+Or when it receives an RS message from a host.
+
+*** Host Process to Generate Interface ID
+When you use SLAAC the hosts get the 64-bit IPv6 subnet information from the RA.
+But it still has to generate the remaining 64-bit interface identifier (ID) using one of two methods:
+
+- Randomly Generated, this is done by Windows 10 hosts or
+- EUI-64, this uses the hosts mac address, and does some stuff with it.
+
+  Some Hosts prefer the randomly generated ID for security reasons.
+
+*** Duplicate Address Detection
+When you let hosts create their own address there is no guarantee that the address is unique on the network.
+Hosts can use the Duplicate Address Detection (DAD) process to ensure that the address is unique.
+It works using ICMPv6. It sends Neighbor Solicitation (NS) messages. If no reply comes back that means that the address is unique.
+
+** DHCPv6
+*** DHCPv6 Operation Steps
+You can use DHCPv6 stateless or stateful.
+Stateless DHCPv6 uses SLAAC while the stateful version does not.
+
+The host begins the DHCPv6 communication after it received the M or O flag from an RA.
+
+Server to client messages use UDP with the dst. port 546 while client to server messages use UDP with the dst. port 547.
+
+The steps for DHCPv6 operations are as follows:
+1. The host sends an RS message
+2. The router responds with an RA message
+3. The host sends a DHCPv6 SOLICIT message
+4. The DHCPv6 server responds with an ADVERTIVE message
+5. The host responds to the DHCPv6 server
+6. The DHCPv6 server sends a REPLY message
+
+   [[./res/dhcpv6.png]]
+ 
+*** Stateless DHCPv6 Operation
+The stateless DHCPv6 server only provides information that is identical for all devices, like the DNS server or the gateway.
+
+In this case the RA message would look like this:
+| *Flag* | *Message* |
+|------+---------|
+| A    |       1 |
+| O    |       1 |
+| M    |       0 |
+
+The A Flag tells the client to use SLAAC and the O Flag tells him to get other information from a DHCPv6 server.
+
+*** Enable Stateless DHCPv6 on an Interface
+You can use the command *ipv6 nd other-config-flag* to comfigure this.
+*no ipv6 nd other-config-flag* resets the interface to only use SLAAC.
+
+*** Stateful DHCPv6 Operation
+This version does not use SLAAC.
+The DHCPv6 server generates a GUA for the host to use.
+It get's all information from the server except for the default gateway.
+The default gateway is the source IPv6 link-local address for the RA.
+
+The RA looks like this:
+| *Flag* | *Message* |
+|------+---------|
+| A    |       0 |
+| O    |       0 |
+| M    |       1 |
+
+*** Enable Stateful DHCPv6 on an Interface
+You can set the M flag with *ipv6 nd managed-config-flag* and then you have to unset the A flag with *ipv6 nd prefix default no-autoconfig*
+
+** Configure DHCPv6 Server
+*** DHCPv6 Router Roles
+A Cisco router can be configured to be the following:
+- DHCPv6 Server
+- DHCPv6 Client
+- DHCPv6 Relay Agent
+
+*** Configure a Stateless DHCPv6 Server
+The steps to configure a stateless DHCPv6 server are:
+1. Enable IPv6 routing
+   #+begin_src 
+  R1(config)# ipv6 unicast-routing
+   #+end_src
+2. Define a DHCPv6 pool name
+   #+begin_src 
+  R1(config)# ipv6 dhcp pool IPV6-STATELESS
+   #+end_src
+3. Configure the DHCPv6 pool
+  #+begin_src 
+  R1(config-dhcpv6)# dns-server 2001:db8:acad:1::254
+  R1(config-dhcpv6)# domain-name femboy.com
+  R1(config-dhcpv6)# exit
+  #+end_src
+4. Bind the DHCPv6 pool to an interface
+#+begin_src 
+  R1(config)# interface GigabitEthernet0/0/1
+  R1(config-if)# description Link to LAN
+  R1(config-if)# ipv6 address fe80::1 link-local
+  R1(config-if)# ipv6 address 2001:db8:acad:1::1/64
+  R1(config-if)# ipv6 nd other-config-flag
+  R1(config-if)# ipv6 dhcp server IPV6-STATELESS
+  R1(config-if)# no shut
+  R1(config-if)# end
+#+end_src
+
+*** Configure a Stateless DHCPv6 Client
+Here are the steps for a stateless DHCPv6 client:
+1. IPv6 Routing
+ #+begin_src 
+  R3(config)# ipv6 unicast-routing
+ #+end_src
+ 2. Configure client router to create an LLA
+ #+begin_src 
+  R3(config)# interface g0/0/1
+  R3(config-if)# ipv6 enable
+ #+end_src
+3. Configure client router to use SLAAC
+ #+begin_src 
+  R3(config-if)# ipv6 address autoconfig
+  R3(config-if)# end
+ #+end_src
+
+*** Configure a Stateful DHCPv6 Server
+Now we create a stateful DHCPv6 server:
+1. Enable IPv6 routing
+   #+begin_src 
+  R1(config)# ipv6 unicast-routing
+   #+end_src
+2. Define a DHCPv6 pool name
+   #+begin_src 
+  R1(config)# ipv6 dhcp pool IPV6-STATEFUL
+   #+end_src
+3. Configure the DHCPv6 pool
+  #+begin_src 
+  R1(config-dhcpv6)# address prefix 2001:db8:acad:1::/64
+  R1(config-dhcpv6)# dns-server 2001:4860:4860::8888
+  R1(config-dhcpv6)# domain-name femboy.com
+  R1(config-dhcpv6)#
+  #+end_src
+4. Bind the DHCPv6 pool to an interface
+#+begin_src 
+  R1(config)# interface GigabitEthernet0/0/1
+  R1(config-if)# description Link to LAN
+  R1(config-if)# ipv6 address fe80::1 link-local
+  R1(config-if)# ipv6 address 2001:db8:acad:1::1/64
+  R1(config-if)# ipv6 nd managed-config-flag
+  R1(config-if)# ipv6 nd prefix default no-autoconfig
+  R1(config-if)# ipv6 dhcp server IPV6-STATEFUL
+  R1(config-if)# no shut
+  R1(config-if)# end
+#+end_src
+
+*** Configure a Stateful DHCPv6 Client
+Last and also least a stateful client:
+1. IPv6 Routing
+ #+begin_src 
+  R3(config)# ipv6 unicast-routing
+ #+end_src
+ 2. Configure client router to create an LLA
+ #+begin_src 
+  R3(config)# interface g0/0/1
+  R3(config-if)# ipv6 enable
+ #+end_src
+3. Configure client router to use SLAAC
+ #+begin_src 
+  R3(config-if)# ipv6 address dhcp
+  R3(config-if)# end
+ #+end_src
+
+*** DHCPv6 Server Verification Commands
+Yay more show commands *show ipv6 dhcp pool* and *show dhcp binding*.
+
+*** Configure a DHCPv6 Relay Agant
+Fuck we are still not done with this shit
+
+You have to type in the interface where your clients are: *ipv6 dhcp relay destination ipv6-address [interface-type interface-number]*
+Here is an example:
+#+begin_src 
+  R1(config)# interface gigabitethernet 0/0/1
+  R1(config-if)# ipv6 dhcp relay destination 2001:db8:acad:1::2 G0/0/0
+  R1(config-if)# exit
+  R1(config)#
+#+end_src
+
+*** Verify the DHCPv6 Relay Agent
+I just hit my keyboard in rage
+there are more show commands
+fuck you cisco
+
+show ipv6 dhcp interface
+show ipv6 dhcp binding
+
+* FHRP Concepts 
+** First Hop Redundancy Protocols
+*** Default Gateway Limitations
+If your default gateway fails you have a problem because traffic can't leave the network. You need a mechanism to provide alternative gateways. That mechanism is provided by First Hop Redundancy Protocols (FHRPs).
+
+*** Router Redundancy
+One way to provide redundancy is to configure multiple routers to work together to form a virtual router.
+[[./res/fhrp.png]]
+
+You configure one forwaring router and a couple backup ones.
+When a host then configure the virtual router as their default gateway.
+
+*** Steps for Router Failover
+When the forwarding router fails then FHRP then switches to the standby router. This works like so:
+- The standby routers stops receiving Hello messages from the forwaring router
+- The standby router becomes the new forwarding router
+- Because the hosts assume the ip and mac address of the virtual router they don't notice anything
+
+*** FHRP Options
+These are the protocols for FHRP:
+
+- *Hot Standby Router Protocol (HSRP)*
+  Cisco version of FHRP. Only Supports IPv4.
+  
+- *HSRP for IPv6*
+  Same functionality with suppport for IPv6
+  
+- *Virtual Router Redundancy Protocol version 2 (VRRPv2)*
+  Non-proprietary election protocol. It uses weird terminology but i think it works the same as HSRP.
+
+- *VHRPv3*
+  More scaleable than VHRPv2 and it supports both IPv4 and IPv6
+
+- *Gateway Load Balancing Protocol (GLBP)*
+  From Cisco. Has load balancing between a group of redundant routers.
+
+- *GLBP for IPv6*
+  Yeah
+
+- *ICMP Router Discovery Protocol (IRDP)*
+    This is a legacy FHRP solution. This allows hosts to find other gateways in case the normal fails.
+    
+** HSRP
+*** HSRP Overview
+Cisco uses HSRP and HSRP for IPv6 for FHRP. It allows for "transparent failover of first hop IP device"?
+
+*** HSRP Priority and Preemption
+The Role of active and standby routers is determined during the HSRP election process. By default the router with the highest numerical IPv4 address is chosen as the active router. You can also control the election instead of letting it chose just any router.
+
+- *HSRP Priority*
+  You can use this HSRP Priority to determine the active router. The router with the highest priority will become the active router. The priority defaults to 100, if the priorities are equal the active router is determined through the IP address.
+
+- *HSRP Preemption*
+  By default once a router becomes active it stays active even is you give another router a higher priority. To force the election to take place when a higher priority router goes online you must enable preemption with the command *standby preempt*.
+
+*** HSRP States and Timers
+  A router can be either the active router that forwards traffic or a passive router on standby. 
+  When an interface is configured with HSRP or is first activated with an HSRP config it sends HSRP hello messages to determine its state.
+
+These are the states (V.IP = address of the virtual router):
+| *State*   | *Description*                                                    |
+|---------+----------------------------------------------------------------|
+| Initial | Entered through a config change or when it becomes available   |
+| Learn   | Has not received hello messages and does not know the V.IP     |
+| Listen  | Knows the V.IP but is not active or passive yet                |
+| Speak   | Sends periodic hello messages and participates in the election |
+| Standby | Candidate for the next active router and sends hello messages  |
+| Active  | The router won the election                                    |
+
+* LAN Security Concepts
+** Endpoint Security
+*** Network Attacks today
+Most attacks today involve one of the following:
+- *Distributed Denial of Service (DDOS)*: Flooing a server with data from different devices
+- *Data Breach*: Attack in which a companies confidential data is stolen
+- *Malware*: Attack in which hosts are infected with malicious software that can cause a variety of problems.
+
+*** Network Security Devices
+There are network devices that can protect a network from attack from the outside:
+- *VPN-Enabled Router*: This can provide a secure connection to remote users.
+- *NGFW*: A Next-Gen Firewall provides packet inspection, application security, next-generation intrusion prevention system (NGIPS), advanced malware protection (AMP) and URL filtering.
+- *NAC*: A Network Access Control device includes AAA services. For example Cisco Identity Service Engine (ISE).
+
+*** Endpoint Protection
+Endpoints are hosts like laptops, PCs, servers or phones. They are particulary suseptible to malware-related attacks.
+These often use a host-based security-application such an anti-virus.
+Best practice would be to pair these with network security devices.
+
+*** Cisco Email Security Appliance
+Content security appliances have control over email and web browing of an organizations users.
+Accoring to "Cisco's thanos yapping group" or whatever were 85% of all email send in June 2019 [[https://en.wikipedia.org/wiki/Spam_(food)][spam]].
+
+Cisco ESA is a device designed to monitor Simple Mail Transfer Protocol (SMTP).
+These are the features:
+- Block known threats
+- Remediate against stealth malware that evaded initial detection
+- Block emails with bad links
+- Block access to newly infected sites
+- Encrypt content in outgoing email "to prevent data loss"?
+  (Do they mean data theft... tf how does encrypting data help it with not getting lost?)
+
+  Anyway here a wonderful illustration of how willi is trying to hack me but he is not successful because the ESA saves me:
+  [[./res/esa.png]]
+
+*** Cisco Web Security Appliance
+This bad boy helps to control web based threats.
+The Cisco WSA combines advanced malware protcection, application visibility and control, acceptable use policy controls, and reporting.
+
+(Bro... is netacad just one big ad for cisco wft)
+
+Here is the Cisco WSA in a picture:
+[[./res/wsa.png]]
+
+** Access Control
+*** Authentication with a Local Password
+This chapter tells us once again that vty lines are bad because you only need a password. It provides no accountability and the password is sent in plaintext.
+
+SSH is better because you also need a username, it provides accountabiility because the username is recorded when someone logs in, the both username and password are encrypten during transmission and username and password can be authenticated by the local database method.
+
+The local database method also has some limitations:
+- Accounts must be configured locally
+- No fallback authentication method
+
+It would be better to have a center server with all users.
+
+*** AAA Components
+AAA Stands for Authentication, Authorization and Accounting.
+AAA is a concept that provides the primary framework to set up access control on a network device.
+
+Here is AAA done in banking:
+[[./res/aaa.png]]
+
+*** Authentication
+Local and server-based are two common methods to implement AAA authentication.
+Local mean the device you try to connect to has the login data saved locally.
+Server-Based means the device you try to connect to ask a dedicated AAA server for help.
+
+*** Authorization
+This happens automatically and does not require the user to do anything.
+Authorization governs what a user can and cannot do on the network after they are authenticated.
+
+*** Accounting
+This is responsible for collecting usage data. Data might include time of the connection, executed commands and stuff.
+This is done to keep track of what each user has done in case something bad happens you need to blame someone.
+
+*** 802.1X
+The IEEE 802.1X standard is a port-based access control and authentication protocol.
+With this each device in the network has specific roles:
+- *Client (Supplicant)*: This device runs a 802.1X compliant software.
+- *Switch (Authenticator)*: The switch requests identifying information from the Client and verifies it with the server.
+- *Authentication server*: The server validates the idenitity of the client and notifies the switch if the client is authorized to enter the LAN.
+
+  [[./res/supplicant.png]]
+
+** Layer 2 Security Threats
+*** Layer 2 Vulnerabilites
+Admins protect Layer 3 to 7 with firewalls, VPNs and IPS devices. But if layer 2 is compromised then all layers above are also affected.
+
+*** Switch Attack Categories
+Security is only as strong as the weakest link in the system. And layer 2 is considered to be the weakest.
+This may not be true but it sounds cool.
+
+Anyway here are the attacks against layer 2:
+| *Category*                 | *Example*                                      |
+|--------------------------+----------------------------------------------|
+| MAC Table Attacks        | Include MAC address flooding attacks         |
+| VLAN Attacks             | VLAN hopping and VLAN double-tagging attacks |
+| DHCP Attacks             | DHCP Starvation and DHCP spoofing attacks    |
+| ARP Attacks              | ARP spoofing and ARP poisoning attacks       |
+| Address Spoofing Attacks | MAC address- and IP address spoofing attacks |
+| STP Attacks              | Spanning Tree Protocol manipulation attacks  |
+
+*** Switch Attack Mitigation Techniques
+Here we have a table with Cisco solutions to help mitigate layer 2 attacks.
+| *Solution*      | *Description*                                                         |
+|---------------+---------------------------------------------------------------------|
+| Port Security | Prevents many attacks like MAC address flooding or DHCP starvation  |
+| DHCP Snooping | Prevents DHCP starvation and DHCP spoofing attacks                  |
+| DAI           | Dynamic ARP Inspection help with ARP spoofing and poisoning attacks |
+| IPSG          | IP Source Guard prevents MAC and IP address spoofing attacks        |
+
+These solutions are not effective if the management protocols are not secure. For example Syslog, SNMP, TFTP, telnet FTP and most other common protocols are not secure, therefore you should:
+- Use secure alternatives such as SSH, Secure FTP (SFTP), SSL...
+- Consider using out-of-band management network to manage devices
+- Use a dedicated management VLAN
+- Use ACLs to filter unwanted access
+
+** MAC Address Table Attacks
+*** Switch Operation Review
+Switches make forwarding decisions basend on the cam table so it's kinda important.
+
+*** MAC Address Table Flooding
+In this attack the attacker floods the switch with fake MAC addresses. Since the cam table has a fixed size, once the table is full every frame is treated as an unknown unicast and gets sent out of all ports meaning the attacker can now capture the network traffic.
+
+*** MAC Address Table Mitigation
+The Catalyst 6500 for example can only store 13200 MAC addresses and tools like *macof* can flood a switch with up to 8000 frames per second. Let's do some quick math:
+
+$$
+   t = \tfrac {capacity}{macof frames} 
+   = \tfrac {13200}{8000}
+   = 1.65s
+$$
+
+Meaning about 2 seconds if we are fast. In any case it should only take a few seconds.
+This also don't only affect a single switch because once it's mac address table is full it forwards the frames to it's neighbors.
+
+** LAN Attacks
+*** VLAN Hopping Attacks
+This attack allows VLAN traffic to be seen from another VLAN without help from a router or layer 3 switch.
+It works by pretending to be a switch so you can then take advantage of the automatic trunking port feature enabled by default.\\
+If this works the attacker has established a trunk connection to the switch which means he can now access the VLANs on the switch and can send and receive traffic from them.
+
+*** VLAN Double-Tagging Attack
+You can embed a hidden VLAN tag inside a frame that already was tagged to access VLAN that the original frame could not.\\
+If the first VLAN is the native VLAN the tag gets stripped from the frame and sent out of all native VLAN ports. The switch that receives the frame then only sees the VLAN ID that the attacker added and sends it to this VLAN.\\
+\\
+This only works if the attacker is already connected to a port in the native VLAN.
+
+You can prevent this by:
+- Disabling trunking on all access ports
+- Disable auto trunking
+- Only use the native VLAN for trunks
+
+*** DHCP Attacks
+There are two big DHCP attacks, a starvation attack and DHCP spoofing.\\
+\\
+*DHCP Starvation Attack*\\
+The goal is to create a denial of service for connecting clients. This requires a tool like the *Gobbler*.\\
+\\
+The Gobbler has the ability to find out the scope of leasable IP addresses and tries to lease them all. Meaning he created DHCP discovery messages with bullshit MAC addresses.
+\\
+\\
+*DHCP Spoofing Attack*
+This is when a rouge DHCP server is connected to the network and speads wrong informations like gateways, DNS servers or wrong IP addresses.\\
+\\
+Both of these attacks can be mitigated by implementing DHCP snooping.\\
+
+*** ARP Attacks
+Hosts are allowed to send "gratuitous ARP" messages into the network. Every host that receives that messages saves the IPv4 address and the MAC address of the message into their ARP table. An attack can send these messages with spoofed address to again spread false informations to devices.\\
+\\
+\\
+ARP spoofing and ARP poisoning attacks are mitigated by implementing DAI.
+
+*** Address Spoofing Attack
+IP and MAC addresses can be spoofed for various reasons. Mostly it is get the access to stuff that is restricted to specific addresses.\\
+You can also do some bad stuff to cam tables with MAC address spoofing by giving yourself the address of another host. So you receive their traffic.
+
+*** STP Attack
+Attackers can manipulate the Spanning Tree Protocol. By making their host appear as the root bridge they can capture all traffic for the immediate switches domain.\\
+To do this the attacker sends BPDUs containing configuration and topology changes that force STP to recalculate. The attacker also gives himself a lower bridge priority to be elected as the root bridge.\\
+\\
+You can mitigate this by enabling BPDU Guard on all access ports.
+
+*** CDP Reconnaissance
+The Cisco Discovery Protocol (DCP) is a proprietary layer 2 link discovery protocol. It is enabled on all Cisco devices by default.
+CDP can automatically discover other CDP-enabled devices and help auto-configure their connections. Admins also use it to help configure and troubleshoot network devices.\\
+\\
+CDP information is sent out CDP-enabled ports in a periodic, unencrypted multicast. CDP information includes IP addresses, IOS software version, platform capabilites, and the native VLAN.\\
+\\
+Since the CDP messages are unencrypted and unauthenticated an attacker can both receive CDP messages and send messages with false information.\\
+\\
+To mitigate this limit the CDP use. To disable it globally do *no cdp run* and enable it with *cdp run*.
+You can also disable it for a port with *no cdp enable* on the interface and *cdp enable* to enable it.\\
+\\
+Btw fun fact Link Layer Discovery Protocol (LLDP) is also vulnerable so maybe disable it too.
+
+* Switch Security Configuration
+** Implement Port Security
+*** Secure Unused Ports
+If you have unused port turn them off with *shutdown*.
+
+*** Mitigate MAC Address Table Attacks
+The simplest way to do this is to activate port security.
+This limits the amount of MAC addresses allowed on a port.
+
+*** Enable Port Security
+You can turn of the port security like this:
+
+#+begin_src 
+  S1(config)# interface f0/1
+  S1(config-if)# switchport port-security
+  Command rejected: FastEthernet0/1 is a dynamic port.
+  S1(config-if)# switchport mode access
+  S1(config-if)# switchport port-security
+  S1(config-if)# end
+  S1#
+#+end_src
+
+You can only enable it on manually configured trunk or access ports, meaning do auto trunking.
+If you enable port security and you have more than one device conncted the port will go into the error-disabled state.
+
+*** Limit and Learn MAC Addresses
+You can set the maximum amount of MAC addresses allowed on a port with this command:
+#+begin_src 
+  Switch(config-if)# switchport port-security maximum value 
+#+end_src
+
+Switches can be configures to learn MAC addresses on a secure port in one of three ways:
+1. Dynamically Learned
+   The Admin configures a static MAC address
+   #+begin_src 
+  Switch(config-if)# switchport port-security mac-address <address>
+   #+end_src
+   
+2. Dynamically Learned
+   When port security security is enabled the switch automatically saves the current MAC address but it is not stored in the running config.
+
+3. Dynamically Learned - Sticky
+   The command:
+   #+begin_src 
+  Switch(config-if)# switchport port-security mac-address sticky 
+   #+end_src
+   will save the current mac address to the running config so when you do your *copy run start* the mac address will persist throughout reboots.
+
+*** Port Security Aging
+Port security aging can be used to configure for how long a saved MAC address is saved. This time can be set in two ways:
+
+- Absolute: The address on the port is deleted after the specified time
+- Inactivity: The address on the port is deleted after the host was inactive for the specified amount of time
+
+Use the *switchport port-security aging* command to enable or disable this.
+#+begin_src 
+  Switch(config-if)# switchport port-security aging { static | time time | type {absolute | inactivity}}
+#+end_src
+
+*** Port Security Violation Modes
+If the MAC address of the devices attached differs from the list of secure addresses then port violation happens. By default the port enters the error-disabled state.
+
+To set the violation mode do:
+#+begin_src 
+  Switch(config-if)# switchport port-security violation { protect | restrict | shutdown} 
+#+end_src
+
+Here are the modes explained:
+| *Mode*     | *Discards Traffic* | *Syslog Message* | *Increase Violation Counter* | *Port Shutdown* |
+|----------+------------------+----------------+----------------------------+---------------|
+| Protect  | Yes              | No             | No                         | No            |
+| Restrict | Yes              | Yes            | Yes                        | No            |
+| Shutdown | Yes              | Yes            | Yes                        | Yes           |
+
+*** Ports in error-disabled State
+When port security violation happens the mode is Shutdown the port is physically shutdown and placed in the error-disabled state.
+
+*** Verify Port Security
+Words can't convey what I felt when i saw that there are more show commands.
+
+*show port-security* shows the port-security for all ports
+*show port-security interface <int>* shows the port-security for the specified interface
+*show run* shows you if the MAC addresses are really [[https://www.youtube.com/watch?v=Ry4KCpSbago][sticky]]
+*show port-security address* shows the MAC addresses that each port learned
+
+** Mitigate VLAN Attacks
+*** VLAN Attacks Review
+A VLAN hopping attack can be launched in three ways:
+- Spoofing DTP messages to enter trunking mode
+- Indroducing a rouge switch to enter trunking mode
+- Double Tagging
+
+*** Steps to Mitigate VLAN Hopping Attacks
+Follow these steps:
+1. Disable DTP on non-trunking ports with *switchport mode access*
+2. Disable unused ports and put them in an unused VLAN
+3. Manually enable trunking with *switchport mode trunk*
+4. Disable DTP on trunking ports with *switchport nonegotiate*
+5. Set the native VLAN to something other than 1 with *switchport trunk native vlan <vlanid>*
+
+Here is an example
+
+#+begin_src 
+  S1(config)# interface range fa0/1 - 16
+  S1(config-if-range)# switchport mode access
+  S1(config-if-range)# exit
+  S1(config)# 
+  S1(config)# interface range fa0/17 - 20
+  S1(config-if-range)# switchport mode access
+  S1(config-if-range)# switchport access vlan 1000
+  S1(config-if-range)# shutdown
+  S1(config-if-range)# exit
+  S1(config)# 
+  S1(config)# interface range fa0/21 - 24
+  S1(config-if-range)# switchport mode trunk
+  S1(config-if-range)# switchport nonegotiate
+  S1(config-if-range)# switchport trunk native vlan 999
+  S1(config-if-range)# end
+  S1#
+#+end_src
+
+** Mitigate DHCP Attacks
+*** DHCP Attack Review
+DHCP starvation attacks try to reserve all leasable IP addresses. This can be mitigated with port security because Gobbler uses different MAC addresses to archive this.
+
+DHCP spoofing attacks are harder to block but still possible by configuring trusted ports with DHCP snooping.
+
+*** DHCP Snooping
+DHCP snooping determines whether a DHCP message is from a trusted or untrusted source. It filters DHCP messages and rate-limits DHCP traffic from untrusted sources.
+
+[[./res/dhcpsnoop.png]]
+
+*** Steps to Implement DHCP Snooping
+Follow these steps:
+1. Enable DHCP snooping with the *ip dhcp snooping* global command
+2. On trusted ports use the *ip dhcp snooping trust* interface command
+3. Limit the number of DHCP discovery messages that can be received with *ip dhcp snooping limit rate* in untrusted interfaces
+4. Enable DHCP snooping by VLAN or by a range of VLANs with *ip dhcp snooping <vlanid>*
+
+*** DHCP Snooping Configuration Example
+[[./res/snoopex.png]]
+
+This is how you would configure DHCP snooping on S1:
+#+begin_src 
+  S1(config)# ip dhcp snooping
+  S1(config)# interface f0/1
+  S1(config-if)# ip dhcp snooping trust
+  S1(config-if)# exit
+  S1(config)# interface range f0/5 - 24
+  S1(config-if-range)# ip dhcp snooping limit rate 6
+  S1(config-if-range)# exit
+  S1(config)# ip dhcp snooping vlan 5,10,50-52
+  S1(config)# end
+  S1#
+#+end_src
+
+** Mitigate ARP Attacks
+*** Dynamic ARP Inspection
+In a typical ARP attack an attacker would send nsolicited ARP requests to other hosts with the MAC of the attack and the IP of the gateway to create a man-in-the-middle situation.
+
+Dynamic ARP inspection (DAI) requires DHCP snooping and helps to prevent ARP attacks by:
+- Not relaying invalid g. ARP requests
+- Intercepting all ARP requests on untrusted ports
+- Verifying each intercepted request for a valid IP-to-MAC binding
+- Dropping and logging ARP requests from invalid sources to prevent ARP poisoning
+- Error-disabling the interface if configured number of ARP packets is exceeded
+
+*** DAI Implementation Guidelines
+Follow these implementation guidelines:
+- Enable DHCP snooping globally
+- Enable DHCP snooping on selected VLANs
+- Enable DAI on selected VLANs
+- Configure trusted interfaces for DHCP snooping and ARP inspection.
+
+You should generally configure all access ports as untrusted and all uplink ports to other switches as trusted.
+
+*** DAI Configuration Example
+
+[Here we configure DAI for S1:
+
+[[./res/daiex.png]]
+
+#+begin_src 
+  S1(config)# ip dhcp snooping
+  S1(config)# ip dhcp snooping vlan 10
+  S1(config)# ip arp inspection vlan 10
+  S1(config)# interface fa0/24
+  S1(config-if)# ip dhcp snooping trust
+  S1(config-if)# ip arp inspection trust
+#+end_src
+
+** Mitigate STP Attacks
+*** PortFast and BPDU Guard
+Network attackers try to manipulate the STP by spoofing the root bridge. We can use PortFast and BPDU Guard to prevent this.
+
+Portfast immediately brings an interface to the forwarding state from the blocking state, skiping listening and learning states. This should only be done on access ports connecting end devices.
+
+BPDU Guard immediately error-disables a port that receives a DPDU. This also should only be configued on access ports that connect end devices.
+
+*** Configure PortFast
+PortFast can be enabled on an interface with *spanning-tree portfast*. Or you can configure it globally for all access ports with *spanning-tree portfast default*.
+
+*** Configure BPDU Guard
+Even if PortFast is enabled the interface will still listen for BPDUs.
+To error-disable the port when a BPDU arrives configure BPDU Guard using *spanning-tree bpduguard enable* on an interface or globally with *spanning-tree portfast bpduguard default* to enable it for all access ports.
+
+You can re-enable an interface that was disabled by BPDU Guard with the *errdisable recovery cause bpduguard* global command.
+
+* WLAN Concepts
+** Introduction to Wireless
+*** Benefits of Wireless
+A Wireless LAN (WLAN) is most commonly used in homes, offices and campus environments.
+The benefits it brings to the table are:
+- Mobility
+- Cost saving
+- Easily adaptable
+
+*** Types of Wireless Networks
+Wireless networks are based on IEEE standards and can be classified into four main types:
+- WPAN: Wireless Personal-Area Network. For example Bluetooth.
+- WLAN: Wireless Local Area Network. Like a LAN only wireless.
+- WMAN: Wireless MANs. Provide service over large geographic areas.
+- WWAN Wireless Wide-Area Networks. Cover extensive areas.
+
+*** Wireless Technologies
+Wireless uses the unlicensed radio spectrum to send and receive data.
+Here are some examples of technologies that use wireless:
+- Bluetooth
+- WiMAX
+- Callular Broadband
+- Satellite Broadband
+
+*** 802.11 Standards
+Of course there are the infamous 802 standards:
+(I ain't copying that table, look at it yourself: [[https://contenthub.netacad.com/srwe/12.1.4][Cisco]])
+
+*** Radio Frequencies
+Wireless devices operate in the radio waves range of the electromagnetic spectrum.
+2.4 and 5 GHz
+
+*The spectrum:*
+[[./res/radiospec.png]]
+
+*** Wireless Standards Organizations
+The three organizations influencing the WLAN standars are:
+- ITU (International Telecommunication Union)
+- IEEE (The usual boys)
+- Wi-Fi Alliance (Sounds like a WoW clan)
+   
+** WLAN Components
+*** Wireless NICs
+Wireless requires a minimum of two devices that have a radio transmitter and a radio receiver turned to the same frequency.
+Most devices have the these built-in but you can also buy a goofy looking external wifi adapter.
+
+*** Wireless Home Router
+Home users connect their devices usually with wifi so for convenience home routers combine the functionality of a:
+- Access point
+- Switch
+- Router
+
+  A wireless router advertises it's network by sending beacons containing it's "shared service set identifier" (SSID).
+  If your wifi sucks you can also implement wifi range extenders that connect wirelessly.
+
+*** Wireless Access Points
+Wifi extenders are shit and you should use an access point that provides dedicated wireless access to user clients.
+
+*** AP Categories
+APs are either autonomous APs or controller-based APs.
+
+Autonompous APs are standalone devices. They are useful when you only have to configure a few.
+Controller-Based APs are even better because you can have a WLAN Controller (WLC) in your network that configures that APs for you.
+
+*** Wireless Antennas
+Most business class APs require an external antenna.
+There are 3 types:
+- Omnidirectional: They provide 360-degree coverage.
+- Directional: The radio signal is focused in a given direction
+- MIMO: Multiple Input Multiple Output uses multiple antennas to increase bandwidth
+
+** WLAN Operation
+*** 802.11 Wireless Topology Modes
+The 802.11 standard defines two main wireless modes, *ad hoc*, when you connect two devices in a P2P manner for example with Bluetooth or Wi-Fi Direct and *Infrastructure mode*, when wireless clients interconnect via a wireless router or AP such as in WLANs.
+
+There also is a third option called *Tethering*, which is a variety of ad hoc in which two devices connect to each other and one of them provides access to the internet.
+
+*** BSS and ESS
+Infrastructure mode defines two topology blocks: Basic Service Set (BSS) and Extended Service Set (ESS).
+
+BSS consists of a single AP interconnecting all wireless clients. If this is not enough you can use ESS which uses multiple APs with the same SSID but unique BSSIDs.
+
+*** 802.11 Frame Structure
+[[./res/wlanframe.png]]
+
+All 802.11 wireless frames contain these fields:
+- Frame Control: Identifies the type if wireless frames and has subfields with some other information
+- Duration: Remaining duration needed to receive the next frame transmission
+
+  Yeah the rest is in [[https://contenthub.netacad.com/srwe/12.3.4][netacad]].
+
+*** CSMA/CA
+WLANs are half-duplex shared media configurations.
+Shared media means that clients can all transmit and receive data on the same radio channel. This is a problem because it makes it hard to avoid collisions.
+
+WLANs use carrier sense multiple access with collision avoidance (CSMA/CA) to determine how and when to send data.
+A client does the following:
+1. Listen to the channel to see if it is idle.
+2. Sends a request to send (RTS) to the AP to request didcated access to the network
+3. Receives a clear to send (CTS) from the AP
+4. If it does not it waits a random amount of time before it tries again
+5. It sends the data
+6. All transmissions are acknoledged. If a wireless client does not receive an ack. it assumes a collision happend and tries again.
+
+*** Wireless Client and AP Association
+To connect to a network wireless devices do the following:
+1. Discover a wireless AP
+2. Authenticate with AP
+3. Associate with AP
+
+   [[./res/connection.png]]
+
+ The client and AP must agree on specific parameters:
+   - *SSID*: The name of the network
+   - *Password*: obviously
+   - *Network Mode*: The WLAN standard
+   - *Security Mode*: WEP, WPA WPA2...
+   - *Channel Settings*: The channel
+
+*** Passive and Active Discover Mode
+Fuck WLAN i'm doing routing now
+
+* Routing Concepts
+** Path Determination
+*** Two Functions of a Router
+The two primary functions of a router are to find the best path to forward packets to and to actually forward them.
+
+*** Best Path Equals Longest Match
+The best route is chosen by converting all routes to binary and comparing them. The longest match is the best route.
+
+*** Build the Routing Table
+A router learns routes in 3 ways:
+- Directly Connected Routes: If a network is directly connected the router automatically knows the route.
+- Remote Networks: Networks that are not directly connected are either statis routes that you configure manually or a dynamic route that the router found out with a protocol like osipof
+- Default route: A backup route if the router doesn't find a specific match
+
+** Packet Forwarding
+*** Packet Forwarding Decision Process
+When the router has determined the best path it now has to encapsulate and forward the packet to the correct egress interface. This figure demonstrates the entire process:
+
+[[./res/rforwarding.png]]
+
+If the packet belongs to a directly connected network the packet can simply be forwarded to the right device.
+If the packet belongs to a remote network the packet is sent to the next router on the way.
+If there is no match in the routing table the packet is dropped.
+
+*** Packet Forwarding Mechanism
+Routers support three packet forwarding mechanisms:
+- Process switching
+- Fast switching
+- Cisco Express Forwarding (CEF)
+
+*Process switching:*
+When a packet arrives on an interface it is forwarded to the control plane where routes and stuff are check and then the packets are forwarded. It is very slow and rarely implementet in modern networks.
+
+[[./res/pro_swi.png]]
+
+*Fast Switching:*
+Another old mechanism. It uses a cache to not ask the CPU for the destination on every packet.
+
+[[./res/fast_swi.png]]
+
+*CEF:*
+Most recent and default Cisco IOS packet-forwarding mechanism. This is the fastest option:
+
+[[./res/cef.png]]
+
+** Basic Router Configuration Review
+To be continued
