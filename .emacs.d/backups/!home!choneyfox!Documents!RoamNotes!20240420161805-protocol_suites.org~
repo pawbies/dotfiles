@@ -1,7 +1,0 @@
-:PROPERTIES:
-:ID:       47c6a01f-0934-412a-a4a0-9e6d2694fdc3
-:END:
-#+title: Protocol Suites
-* Network Protocol Suites
-Protocols need to work together. A protocol suite is a group of inter-related protocols necessary to perform a communication function.
-You can view the interaction of the protocols as a stack.

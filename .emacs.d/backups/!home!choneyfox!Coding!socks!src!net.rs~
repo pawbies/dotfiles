@@ -1,5 +1,0 @@
-mod client {
-    pub fn start() {
-	println!("Staring client");
-    }
-}

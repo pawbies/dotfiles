@@ -7,3 +7,5 @@
 [user]
 	email = 75548757+CHoneyfox@users.noreply.github.com
 	name = CHoneyfox
+[core]
+	compression = 0
